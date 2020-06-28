@@ -1,4 +1,4 @@
-﻿namespace MG1
+﻿namespace PictureViewer
 {
     partial class Form1
     {

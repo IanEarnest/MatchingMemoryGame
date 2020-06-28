@@ -5,9 +5,11 @@ VisualStudioVersion = 16.0.30204.135
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MatchingGame", "MatchingGame\MatchingGame.csproj", "{4544D4C6-D272-4802-A4AC-7F42B0382730}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PictureViewer", "MG1\PictureViewer.csproj", "{5B5D1CB5-915C-486A-8751-341486397BCC}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PictureViewer", "PictureViewer\PictureViewer.csproj", "{5B5D1CB5-915C-486A-8751-341486397BCC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MathQuiz", "MathQuiz\MathQuiz.csproj", "{AC48C47A-1311-4134-8412-CE7A55D0AFAF}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MathQuiz", "MathQuiz\MathQuiz.csproj", "{AC48C47A-1311-4134-8412-CE7A55D0AFAF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MMG", "MMG\MMG.csproj", "{A1D88E49-CA9C-467E-B635-0AE295CB8D78}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -27,6 +29,10 @@ Global
 		{AC48C47A-1311-4134-8412-CE7A55D0AFAF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{AC48C47A-1311-4134-8412-CE7A55D0AFAF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{AC48C47A-1311-4134-8412-CE7A55D0AFAF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A1D88E49-CA9C-467E-B635-0AE295CB8D78}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A1D88E49-CA9C-467E-B635-0AE295CB8D78}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A1D88E49-CA9C-467E-B635-0AE295CB8D78}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A1D88E49-CA9C-467E-B635-0AE295CB8D78}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

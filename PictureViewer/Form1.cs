@@ -8,10 +8,11 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
-namespace MG1
+namespace PictureViewer
 {
     public partial class Form1 :Form
     {
+        // https://docs.microsoft.com/en-us/visualstudio/ide/tutorial-1-create-a-picture-viewer?view=vs-2019#next-steps
         public Form1()
         {
             InitializeComponent();
