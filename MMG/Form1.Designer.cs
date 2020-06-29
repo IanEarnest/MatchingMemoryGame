@@ -30,6 +30,12 @@
         {
             this.components = new System.ComponentModel.Container();
             this.tableLayoutPanel1 = new System.Windows.Forms.TableLayoutPanel();
+            this.infoLabel = new System.Windows.Forms.Label();
+            this.p6Label = new System.Windows.Forms.Label();
+            this.p5Label = new System.Windows.Forms.Label();
+            this.p4Label = new System.Windows.Forms.Label();
+            this.p3Label = new System.Windows.Forms.Label();
+            this.p2Label = new System.Windows.Forms.Label();
             this.label25 = new System.Windows.Forms.Label();
             this.label19 = new System.Windows.Forms.Label();
             this.label13 = new System.Windows.Forms.Label();
@@ -60,6 +66,7 @@
             this.label4 = new System.Windows.Forms.Label();
             this.label2 = new System.Windows.Forms.Label();
             this.label1 = new System.Windows.Forms.Label();
+            this.p1Label = new System.Windows.Forms.Label();
             this.timer1 = new System.Windows.Forms.Timer(this.components);
             this.tableLayoutPanel1.SuspendLayout();
             this.SuspendLayout();
@@ -75,6 +82,12 @@
             this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 15F));
             this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 15F));
             this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 15F));
+            this.tableLayoutPanel1.Controls.Add(this.infoLabel, 0, 6);
+            this.tableLayoutPanel1.Controls.Add(this.p6Label, 0, 5);
+            this.tableLayoutPanel1.Controls.Add(this.p5Label, 0, 4);
+            this.tableLayoutPanel1.Controls.Add(this.p4Label, 0, 3);
+            this.tableLayoutPanel1.Controls.Add(this.p3Label, 0, 2);
+            this.tableLayoutPanel1.Controls.Add(this.p2Label, 0, 1);
             this.tableLayoutPanel1.Controls.Add(this.label25, 2, 5);
             this.tableLayoutPanel1.Controls.Add(this.label19, 5, 5);
             this.tableLayoutPanel1.Controls.Add(this.label13, 1, 5);
@@ -105,6 +118,7 @@
             this.tableLayoutPanel1.Controls.Add(this.label4, 3, 0);
             this.tableLayoutPanel1.Controls.Add(this.label2, 1, 0);
             this.tableLayoutPanel1.Controls.Add(this.label1, 1, 0);
+            this.tableLayoutPanel1.Controls.Add(this.p1Label, 0, 0);
             this.tableLayoutPanel1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.tableLayoutPanel1.Location = new System.Drawing.Point(0, 0);
             this.tableLayoutPanel1.Name = "tableLayoutPanel1";
@@ -118,6 +132,60 @@
             this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 14.28571F));
             this.tableLayoutPanel1.Size = new System.Drawing.Size(800, 450);
             this.tableLayoutPanel1.TabIndex = 0;
+            // 
+            // infoLabel
+            // 
+            this.infoLabel.AutoSize = true;
+            this.infoLabel.Location = new System.Drawing.Point(5, 380);
+            this.infoLabel.Name = "infoLabel";
+            this.infoLabel.Size = new System.Drawing.Size(71, 20);
+            this.infoLabel.TabIndex = 1;
+            this.infoLabel.Text = "infoLabel";
+            // 
+            // p6Label
+            // 
+            this.p6Label.AutoSize = true;
+            this.p6Label.Location = new System.Drawing.Point(5, 317);
+            this.p6Label.Name = "p6Label";
+            this.p6Label.Size = new System.Drawing.Size(26, 20);
+            this.p6Label.TabIndex = 1;
+            this.p6Label.Text = "p6";
+            // 
+            // p5Label
+            // 
+            this.p5Label.AutoSize = true;
+            this.p5Label.Location = new System.Drawing.Point(5, 254);
+            this.p5Label.Name = "p5Label";
+            this.p5Label.Size = new System.Drawing.Size(26, 20);
+            this.p5Label.TabIndex = 1;
+            this.p5Label.Text = "p5";
+            // 
+            // p4Label
+            // 
+            this.p4Label.AutoSize = true;
+            this.p4Label.Location = new System.Drawing.Point(5, 191);
+            this.p4Label.Name = "p4Label";
+            this.p4Label.Size = new System.Drawing.Size(26, 20);
+            this.p4Label.TabIndex = 1;
+            this.p4Label.Text = "p4";
+            // 
+            // p3Label
+            // 
+            this.p3Label.AutoSize = true;
+            this.p3Label.Location = new System.Drawing.Point(5, 128);
+            this.p3Label.Name = "p3Label";
+            this.p3Label.Size = new System.Drawing.Size(26, 20);
+            this.p3Label.TabIndex = 1;
+            this.p3Label.Text = "p3";
+            // 
+            // p2Label
+            // 
+            this.p2Label.AutoSize = true;
+            this.p2Label.Location = new System.Drawing.Point(5, 65);
+            this.p2Label.Name = "p2Label";
+            this.p2Label.Size = new System.Drawing.Size(26, 20);
+            this.p2Label.TabIndex = 1;
+            this.p2Label.Text = "p2";
             // 
             // label25
             // 
@@ -479,6 +547,20 @@
             this.label1.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             this.label1.Click += new System.EventHandler(this.label_Click);
             // 
+            // p1Label
+            // 
+            this.p1Label.AutoSize = true;
+            this.p1Label.Location = new System.Drawing.Point(5, 2);
+            this.p1Label.Name = "p1Label";
+            this.p1Label.Size = new System.Drawing.Size(26, 20);
+            this.p1Label.TabIndex = 1;
+            this.p1Label.Text = "p1";
+            // 
+            // timer1
+            // 
+            this.timer1.Interval = 750;
+            this.timer1.Tick += new System.EventHandler(this.timer1_Tick);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 20F);
@@ -488,6 +570,7 @@
             this.Name = "Form1";
             this.Text = "Form1";
             this.tableLayoutPanel1.ResumeLayout(false);
+            this.tableLayoutPanel1.PerformLayout();
             this.ResumeLayout(false);
 
         }
@@ -526,6 +609,13 @@
         private System.Windows.Forms.Label label7;
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.Timer timer1;
+        private System.Windows.Forms.Label p1Label;
+        private System.Windows.Forms.Label p6Label;
+        private System.Windows.Forms.Label p5Label;
+        private System.Windows.Forms.Label p4Label;
+        private System.Windows.Forms.Label p3Label;
+        private System.Windows.Forms.Label p2Label;
+        private System.Windows.Forms.Label infoLabel;
     }
 }
 
