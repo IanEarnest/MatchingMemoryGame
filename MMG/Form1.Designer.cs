@@ -30,6 +30,7 @@
         {
             this.components = new System.ComponentModel.Container();
             this.tableLayoutPanel1 = new System.Windows.Forms.TableLayoutPanel();
+            this.restartBtn = new System.Windows.Forms.Button();
             this.infoLabel = new System.Windows.Forms.Label();
             this.p6Label = new System.Windows.Forms.Label();
             this.p5Label = new System.Windows.Forms.Label();
@@ -67,6 +68,8 @@
             this.label2 = new System.Windows.Forms.Label();
             this.label1 = new System.Windows.Forms.Label();
             this.p1Label = new System.Windows.Forms.Label();
+            this.button1 = new System.Windows.Forms.Button();
+            this.newWindowBtn = new System.Windows.Forms.Button();
             this.timer1 = new System.Windows.Forms.Timer(this.components);
             this.tableLayoutPanel1.SuspendLayout();
             this.SuspendLayout();
@@ -82,6 +85,7 @@
             this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 15F));
             this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 15F));
             this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 15F));
+            this.tableLayoutPanel1.Controls.Add(this.restartBtn, 1, 6);
             this.tableLayoutPanel1.Controls.Add(this.infoLabel, 0, 6);
             this.tableLayoutPanel1.Controls.Add(this.p6Label, 0, 5);
             this.tableLayoutPanel1.Controls.Add(this.p5Label, 0, 4);
@@ -119,6 +123,8 @@
             this.tableLayoutPanel1.Controls.Add(this.label2, 1, 0);
             this.tableLayoutPanel1.Controls.Add(this.label1, 1, 0);
             this.tableLayoutPanel1.Controls.Add(this.p1Label, 0, 0);
+            this.tableLayoutPanel1.Controls.Add(this.button1, 2, 6);
+            this.tableLayoutPanel1.Controls.Add(this.newWindowBtn, 3, 6);
             this.tableLayoutPanel1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.tableLayoutPanel1.Location = new System.Drawing.Point(0, 0);
             this.tableLayoutPanel1.Name = "tableLayoutPanel1";
@@ -132,6 +138,18 @@
             this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 14.28571F));
             this.tableLayoutPanel1.Size = new System.Drawing.Size(800, 450);
             this.tableLayoutPanel1.TabIndex = 0;
+            // 
+            // restartBtn
+            // 
+            this.restartBtn.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.restartBtn.Enabled = false;
+            this.restartBtn.Location = new System.Drawing.Point(203, 383);
+            this.restartBtn.Name = "restartBtn";
+            this.restartBtn.Size = new System.Drawing.Size(111, 62);
+            this.restartBtn.TabIndex = 1;
+            this.restartBtn.Text = "Restart";
+            this.restartBtn.UseVisualStyleBackColor = true;
+            this.restartBtn.Click += new System.EventHandler(this.restartBtn_Click);
             // 
             // infoLabel
             // 
@@ -527,7 +545,7 @@
             // 
             this.label2.Dock = System.Windows.Forms.DockStyle.Fill;
             this.label2.Font = new System.Drawing.Font("Webdings", 48F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point);
-            this.label2.Location = new System.Drawing.Point(203, 2);
+            this.label2.Location = new System.Drawing.Point(322, 2);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(111, 61);
             this.label2.TabIndex = 0;
@@ -539,7 +557,7 @@
             // 
             this.label1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.label1.Font = new System.Drawing.Font("Webdings", 48F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point);
-            this.label1.Location = new System.Drawing.Point(322, 2);
+            this.label1.Location = new System.Drawing.Point(203, 2);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(111, 61);
             this.label1.TabIndex = 0;
@@ -556,9 +574,29 @@
             this.p1Label.TabIndex = 1;
             this.p1Label.Text = "p1";
             // 
+            // button1
+            // 
+            this.button1.Location = new System.Drawing.Point(322, 383);
+            this.button1.Name = "button1";
+            this.button1.Size = new System.Drawing.Size(94, 29);
+            this.button1.TabIndex = 2;
+            this.button1.Text = "Server";
+            this.button1.UseVisualStyleBackColor = true;
+            this.button1.Click += new System.EventHandler(this.button1_Click);
+            // 
+            // newWindowBtn
+            // 
+            this.newWindowBtn.Location = new System.Drawing.Point(441, 383);
+            this.newWindowBtn.Name = "newWindowBtn";
+            this.newWindowBtn.Size = new System.Drawing.Size(111, 29);
+            this.newWindowBtn.TabIndex = 3;
+            this.newWindowBtn.Text = "new window";
+            this.newWindowBtn.UseVisualStyleBackColor = true;
+            this.newWindowBtn.Click += new System.EventHandler(this.newWindowBtn_Click);
+            // 
             // timer1
             // 
-            this.timer1.Interval = 750;
+            this.timer1.Interval = 250;
             this.timer1.Tick += new System.EventHandler(this.timer1_Tick);
             // 
             // Form1
@@ -616,6 +654,9 @@
         private System.Windows.Forms.Label p3Label;
         private System.Windows.Forms.Label p2Label;
         private System.Windows.Forms.Label infoLabel;
+        private System.Windows.Forms.Button restartBtn;
+        private System.Windows.Forms.Button button1;
+        private System.Windows.Forms.Button newWindowBtn;
     }
 }
 
