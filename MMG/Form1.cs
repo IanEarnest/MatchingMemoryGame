@@ -37,16 +37,17 @@ namespace MMG
 
         // Use this Random object to choose random icons for the squares
         Random random = new Random();
-        Color selectedColour = Color.Black;
-        Color hiddenColour;     // white = debug
-        Color debugColour = Color.Green;
-        Color bgColour = Color.LightCyan;
-        Color selectedPlayerColour = Color.Red;
-        Color iAmPlayerColour = Color.Green;
+        //Color selectedColour = Color.Black;
+        //Color hiddenColour;     // white = debug
+        //Color debugColour = Color.Green;
+        Color isTurnBGColour;
+        Color isNotTurnBGColour = Color.LightCyan; // for player to know not their turn
+        Color selectedPlayerColour = Color.Red; // for player to know who's turn is now
+        Color iAmPlayerColour = Color.Green; // for player to know which player they are
 
         // Originals
-        Color oSelectedColour = Color.Black;
-        Color oHiddenColour;
+        //Color oSelectedColour = Color.Black;
+        //Color oHiddenColour;
 
 
         int iAmPlayer;
@@ -344,15 +345,16 @@ namespace MMG
             serverBtnsPanel.Visible = true;
 
             // Colours - other defaults set above
-            hiddenColour = label1.BackColor; // label1 = first clickable spot
-            oHiddenColour = hiddenColour; //this.BackColor;
+            //hiddenColour = label1.BackColor; // label1 = first clickable spot
+            //oHiddenColour = hiddenColour; //this.BackColor;
             //debugColour = hiddenColour;
-
+            isTurnBGColour = tableLayoutPanel1.BackColor;//this.BackColor; // white??
+            Debug.WriteLine($"isTurnBGColour = {isTurnBGColour.Name}");
             if (debug)
             {
-                Debug.WriteLine("-Debug colours used");
-                hiddenColour = Color.White; // Color.White = debug
-                oHiddenColour = hiddenColour;
+                //Debug.WriteLine("-Debug colours used");
+                //hiddenColour = Color.White; // Color.White = debug
+                //oHiddenColour = hiddenColour;
                 //debugColour = Color.Green;
             }
 
@@ -372,6 +374,10 @@ namespace MMG
                 this.Close();
 
             // For "Server" button
+            // App loading, set default?
+            //isTurnBGColour = this.BackColor; // white??
+            //Debug.WriteLine($"isTurnBGColour = {isTurnBGColour.Name}");
+
             if (InvokeRequired)
             {
                 // Using infoLabel beginInvoke to update all UI on a thread
@@ -511,7 +517,7 @@ namespace MMG
             }
         }
         // Check state and players connected
-        public async void WaitingInfoP1()
+        public Task WaitingInfoP1() // async
         {
             //Debug.WriteLine("BeginAsync WaitingInfo");
 
@@ -595,6 +601,7 @@ namespace MMG
             //}));
             //infoLabel.Text = $"Waiting for Players ..";
             Debug.WriteLine(".EndAsync WaitingInfo");
+            return Task.CompletedTask;
         }
         bool isGameAlreadyStarted = false; // used only for WaitingInfo
         bool isGameClientRunning = false; // used only for P1
@@ -721,7 +728,6 @@ namespace MMG
             // Setup game board
             MakeListOfIcons();
             AssignIconsToSquares(); // Set grid, random
-
             SetAllActiveCardsIcons(); // set all cards to background ([)
 
             resetPlayerLabelsColour(); //pLabels
@@ -741,8 +747,9 @@ namespace MMG
 
             if (debug)
             {
+                ShowAllIcons();
                 //SetAllIconsBG(debugColour); // UI for player waiting (not showing icons)
-                SetAllIconsColours(debugColour);
+                //SetAllIconsColours(debugColour);
             }
 
             // Player 1 start/ play
@@ -849,15 +856,16 @@ namespace MMG
                     // Setup game board
                     MakeListOfIcons();
                     AssignIconsToSquares(); // Set grid, random
-
+                    SetAllActiveCardsIcons(); // set all cards to background ([)
 
                     resetPlayerLabelsColour(); // set twice?
 
-                    SetAllIconsBG(bgColour);
-                    SetAllIconsColours(bgColour);
+                    SetAllIconsBG(isNotTurnBGColour);
+                    //SetAllIconsColours(bgColour);
                     if (debug)
                     {
-                        SetAllIconsColours(debugColour); // here and underin thread?
+                        ShowAllIcons();
+                        //SetAllIconsColours(debugColour); // here and under in thread?
                     }
                     //infoLabel.Text = "Game Started! Player 1 turn";
                 }));
@@ -868,12 +876,14 @@ namespace MMG
                 //selectedColour... removed
                 MakeListOfIcons();
                 AssignIconsToSquares();
+                SetAllActiveCardsIcons(); // set all cards to background ([)
                 resetPlayerLabelsColour(); // error
-                SetAllIconsBG(bgColour);
-                SetAllIconsColours(bgColour);
+                SetAllIconsBG(isNotTurnBGColour);
+                //SetAllIconsColours(bgColour);
                 if (debug)
                 {
-                    SetAllIconsColours(debugColour);
+                    ShowAllIcons();
+                    //SetAllIconsColours(debugColour);
                 }
             }
 
@@ -1087,11 +1097,12 @@ namespace MMG
                         //infoLabel.Text += "."; // Waiting
                         SetScoresLocalUI(); // set ui
 
-                        SetAllIconsBG(bgColour); // UI for player waiting (not showing icons)
-                        SetAllIconsColours(bgColour);
+                        SetAllIconsBG(isNotTurnBGColour); // UI for player waiting (not showing icons)
+                        //SetAllIconsColours(isNotTurnBGColour);
                         if (debug)
                         {
-                            SetAllIconsColours(debugColour); // moved up to see quicker
+                            ShowAllIcons();
+                            //SetAllIconsColours(debugColour); // moved up to see quicker
                         }
                     }));
                 }
@@ -1100,21 +1111,23 @@ namespace MMG
                     //infoLabel.Text += "."; // Waiting
                     SetScoresLocalUI(); // set ui
 
-                    SetAllIconsBG(bgColour);
-                    SetAllIconsColours(bgColour);
+                    SetAllIconsBG(isNotTurnBGColour);
+                    //SetAllIconsColours(isNotTurnBGColour);
                     if (debug)
                     {
-                        SetAllIconsColours(debugColour); // moved up to see quicker
+                        ShowAllIcons();
+                        //SetAllIconsColours(debugColour); // moved up to see quicker
                     }
                 }
                 // update table...
                 //?
-                SetAllIconsBG(bgColour);
-                SetAllIconsColours(bgColour);
-                if (debug)
-                {
-                    SetAllIconsColours(debugColour); // moved up to see quicker
-                }
+                //SetAllIconsBG(isNotTurnBGColour);
+                ////SetAllIconsColours(isNotTurnBGColour);
+                //if (debug)
+                //{
+                //    ShowAllIcons();
+                //    //SetAllIconsColours(debugColour); // moved up to see quicker
+                //}
 
                 MySQLConn.CheckGameState();
                 // Game Ended
@@ -1154,27 +1167,31 @@ namespace MMG
             {
                 infoLabel.BeginInvoke((Action)(() =>
                 {
+                    SetAllActiveCardsIcons();
                     resetPlayerLabelsColour();
                     //SetAllIconsColours(Color.White); // black = disabled
-                    SetAllIconsBG(hiddenColour);
-                    SetAllIconsColours(hiddenColour);
+                    SetAllIconsBG(isTurnBGColour);
+                    //SetAllIconsColours(hiddenColour);
                     // debug set colour?
                     if (debug)
                     {
-                        SetAllIconsColours(debugColour);
+                        ShowAllIcons();
+                        //SetAllIconsColours(debugColour);
                     }
                 }));
             }
             else
             {
+                SetAllActiveCardsIcons();
                 resetPlayerLabelsColour();
                 //SetAllIconsColours(Color.White); // black = disabled
-                SetAllIconsBG(hiddenColour);
-                SetAllIconsColours(hiddenColour);
+                SetAllIconsBG(isTurnBGColour);
+                //SetAllIconsColours(hiddenColour);
                 // debug set colour?
                 if (debug)
                 {
-                    SetAllIconsColours(debugColour);
+                    ShowAllIcons();
+                    //SetAllIconsColours(debugColour);
                 }
             }
             
@@ -1312,6 +1329,49 @@ namespace MMG
                 }
             }
         }
+        // Debug only
+        private void ShowAllIcons()
+        {
+            Debug.WriteLine("DEBUG - ShowAllIcons");
+            int i = 0;
+            foreach (Control control in tableLayoutPanel1.Controls)
+            {
+                Label iconLabel = control as Label;
+
+                // Column 0 and row 6 are for buttons, ignore labels there
+                if (iconLabel != null &&
+                    tableLayoutPanel1.GetColumn(control) != 0 &&
+                    tableLayoutPanel1.GetRow(control) != endRow)
+                {
+                    if (iconLabel.Text != "" && gameIconsLayout[i][0] != "")
+                    {
+                        iconLabel.Text = gameIconsLayout[i][0]; // 0 = ("i", "label1"), 0 0 = ("i")
+                        Debug.Write($" - {gameIconsLayout[i][0]}");
+                    }
+                    else
+                    {
+                        Debug.Write($" - NOT {gameIconsLayout[i][0]}");                    
+                    }
+                    //Debug.WriteLine($"ShowAllIcons - {item[1]}, {item[0]}");
+                    i++;
+                }
+            }
+            Debug.WriteLine("");
+            /*
+            foreach (var item in gameIconsLayout)
+            {
+                //item.Find(clickedLabel.Name)
+
+                // Not blank
+                //if (item.Find(x => x.Contains(clickedLabel.Name)) != "")// default T - ""?
+                if (item.Contains(clickedLabel.Name))// default T - ""?
+                {
+                    clickedLabel.Text = item[0];
+                    Debug.WriteLine($"ShowAllIcons - {item[1]}, {item[0]}");
+                }
+            }
+            */
+        }
         private void ReAssignIconsToSquares(Label clickedLabel)
         {
 
@@ -1369,7 +1429,8 @@ namespace MMG
                 {
                     int randomNumber = random.Next(gameIcons.Count);
                     iconLabel.Text = gameIcons[randomNumber];
-                    iconLabel.ForeColor = hiddenColour;//iconLabel.BackColor; // set invisible
+                    // don't change foreColor, already set, backColor only for turn change
+                    //iconLabel.ForeColor = isTurnBGColour;//iconLabel.BackColor; // set invisible
 
                     //gameIconsLayout[randomNumber] = gameIcons[randomNumber];
                     AddToGameIconsLayout(iconLabel.Text, iconLabel.Name);
@@ -1422,7 +1483,7 @@ namespace MMG
                     tableLayoutPanel1.GetColumn(control) != 0 &&
                     tableLayoutPanel1.GetRow(control) != endRow)
                 {
-                    iconLabel.ForeColor = color;//iconLabel.BackColor;
+                    //iconLabel.ForeColor = color;//iconLabel.BackColor;
                 }
             }
         }
@@ -1455,15 +1516,16 @@ namespace MMG
                     tableLayoutPanel1.GetRow(control) != endRow)
                 {
                     iconLabel.Text = "";
-                    iconLabel.ForeColor = hiddenColour;//iconLabel.BackColor; // set invisible
+                    // should be no icons to see anyway
+                    //iconLabel.ForeColor = isTurnBGColour;//iconLabel.BackColor; // set invisible
                 }
             }
         }
         private void SetClickedIconsColour(Color colour)
         {
-            firstClicked.ForeColor = colour;
-            secondClicked.ForeColor = colour;
-            thirdClicked.ForeColor = colour;
+            //firstClicked.ForeColor = colour;
+            //secondClicked.ForeColor = colour;
+            //thirdClicked.ForeColor = colour;
         }
         public void SetScoresLocalUI()
         {
@@ -1574,13 +1636,20 @@ namespace MMG
                 //if (clickedLabel.ForeColor == selectedColour)
                 //    return;
 
+                // back image is now icons in debug, so skip check
+                if (debug)
+                {
+                    goto SkipBackImageCheck;
+                }
+
                 // if no back image, cannot click
                 if (clickedLabel.Text != "[")
                 {
                     Debug.WriteLine("No back image");
                     return;
                 }
-
+            
+            SkipBackImageCheck:
                 // Otherwise continue
                 ReAssignIconsToSquares(clickedLabel);
 
@@ -1589,7 +1658,7 @@ namespace MMG
                 if (firstClicked == null)
                 {
                     firstClicked = clickedLabel;
-                    firstClicked.ForeColor = selectedColour;
+                    //firstClicked.ForeColor = selectedColour;
                     //MySQLConnection.Update($"FirstClicked={clickedLabel}");
                     return;
                 }
@@ -1601,7 +1670,7 @@ namespace MMG
                 if (secondClicked == null)
                 {
                     secondClicked = clickedLabel;
-                    secondClicked.ForeColor = selectedColour;
+                    //secondClicked.ForeColor = selectedColour;
                     return;
                 }
 
@@ -1625,7 +1694,7 @@ namespace MMG
                 //System.InvalidOperationException: 'Failed to compare two elements in the array.'
                 //clickedLabel.Text = gameIconsLayout[gameIconsLayout.BinarySearch(temp)][1]; // 0 = letter, 1 = name?
                 thirdClicked = clickedLabel;
-                thirdClicked.ForeColor = selectedColour;
+                //thirdClicked.ForeColor = selectedColour;
                 thirdClicked.Refresh(); // doesn't update otherwise
                 //UpdateUI(thirdClicked);
                 // this takes time??
@@ -1731,8 +1800,12 @@ namespace MMG
                 playerTurn = 1;
             }
             infoLabel.Text = $"Turn: P{playerTurn}";
-
+            SetAllActiveCardsIcons();
             resetPlayerLabelsColour();
+            if (debug)
+            {
+                ShowAllIcons();
+            }
             //pLabels[player - 1].Text += " - Your Turn";
 
             // Update tables
@@ -1742,7 +1815,7 @@ namespace MMG
             MySQLConn.SetPlayerTurn(playerTurn);
 
 
-            // waiting, not my turn - Async (move partial outside of thread?)
+            // waiting, is not my turn - Async (move partial outside of thread?)// not your turn
             ChangingTurn_Thread = new Thread(delegate ()
             {
                 Debug.WriteLine("Changing turn, CheckingTurn2 thread started");
@@ -1753,14 +1826,16 @@ namespace MMG
                         // Invoke to enable UI edit
                         infoLabel.BeginInvoke((Action)(() =>
                         {
+                            SetAllActiveCardsIcons();
                             resetPlayerLabelsColour(); //also does - pLabels[MSQLConn.playerTurn - 1].ForeColor = Color.Red;
                                                        // Set colours of table (not clickable)
 
-                            SetAllIconsBG(bgColour);
-                            SetAllIconsColours(bgColour);
+                            SetAllIconsBG(isNotTurnBGColour);
+                            //SetAllIconsColours(isNotTurnBGColour);
                             if (debug)
                             {
-                                SetAllIconsColours(debugColour);
+                                ShowAllIcons();
+                                //SetAllIconsColours(debugColour);
                             }
                         }));
                     }
