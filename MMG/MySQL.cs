@@ -68,7 +68,7 @@ namespace MMG
         // need to change user to player2...?
         // use Linq2SQL and Entity Framework?
         */
-        bool setDefault = false; // SQL defaults
+        //bool setDefault = false; // SQL defaults
 
         public MySqlConnection conn;
         public Form1 myForm;
@@ -112,7 +112,7 @@ namespace MMG
         public bool isGameAlreadyStarted = false;
         public bool isGameClientRunning = false;
         public int playerTurn = 0;
-        public int playersCount = 0;
+        public int playersCount = 1; // default 1
         public int[] playersScores = new int[6];
         
 

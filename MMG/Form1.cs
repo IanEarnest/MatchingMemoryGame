@@ -29,15 +29,26 @@ namespace MMG
         TO CHECK
             start client with already running game(button should open new window, close this one)
         */
+
+        bool debug = false; // true, false
         MySQL MySQLConn = new MySQL();
         public bool thisIsClosed;
 
 
         // Use this Random object to choose random icons for the squares
         Random random = new Random();
-        Color selectedColour;
-        Color hiddenColour;
-        Color assignedColour;
+        Color selectedColour = Color.Black;
+        Color hiddenColour;     // white = debug
+        Color debugColour = Color.Green;
+        Color bgColour = Color.LightCyan;
+        Color selectedPlayerColour = Color.Red;
+        Color iAmPlayerColour = Color.Green;
+
+        // Originals
+        Color oSelectedColour = Color.Black;
+        Color oHiddenColour;
+
+
         int iAmPlayer;
         int playersCount = 3;
         int playerTurn = 1;
@@ -51,8 +62,11 @@ namespace MMG
         // Each of these letters is an interesting icon
         // in the Webdings font,
         // and each icon appears twice in this list
-        List<string> icons = new List<string>();
-        List<string> iconsLayout = new List<string>();
+        List<string> gameIcons = new List<string>();
+        //List<string> gameIconsLayout = new List<string>();
+        List<List<string>> gameIconsLayout = new List<List<string>>();
+        
+
         List<Label> pLabels = new List<Label>();
         // List of clicks, foreach through them to change instead of needing to add more code
         // for each of the clicks?
@@ -63,10 +77,14 @@ namespace MMG
         // secondClicked points to the second Label control that the player clicks
         Label secondClicked = null;
         Label thirdClicked = null;
+        int boardSize = 30;
+        int boardSize_1 = 30;
+        int boardSize_2 = 60;
+        
+        // looping through board
+        int endRow = 6; // this is more when board is bigger
 
-
-
-
+        string youMessage = "(YOU)";
 
 
         // Database stuff = set score, set table, set turn, set gameClientRunning, setGameAlreadyStarted
@@ -79,39 +97,295 @@ namespace MMG
         // gameAlreadyStarted = while running (no users can join), false when gameClientRunning is false, and when waiting for users to join, true when started
         // true, true means game is running and players are playing
 
-        public void CloseForm()
+        // Don't need?
+        /*public void CloseForm()
         {
             this.Close();
+        }*/
+        Thread WaitingInfoP1_Thread;    // P1   - updating infoLabel with playersCount, server - playersCount
+        Thread StartedCheck2_Thread;    // P2   - updating infoLabel with playersCount, server - gameState, playersCount
+                                        // - waiting for game start from P1 
+        Thread CheckingTurn2_Thread;    // Player   - waiting for end of turn, check for winner, server - gameState, checkTurn, checkScores
+                                        // - updating infoLabel, setUI 
+        Thread ChangingTurn_Thread;     // Player   - end of turn, changing, update UI, green icons + CheckingTurn2
+        Thread NewForm_Thread;          // (P2) restartBtn      - start new form, close old 
+        Thread Init_thread;             // (debug) serverBtn    - message box/ reset server 
+        Thread NewWindow_thread;        // (debug) newWindowBtn - start new form
+                                        //WaitingInfoP1_Thread.isbackground?
+        Thread GameEnded_Thread;
+        Thread GameEnded_Thread2;
+        protected override void OnFormClosing(FormClosingEventArgs e)
+        {
+            // still error in 
+            //Exception thrown: 'System.Threading.ThreadInterruptedException' in System.Private.CoreLib.dll
+            try
+            {
+
+            
+            //1.4 Waiting for Players thread is still going??
+            Debug.WriteLine("Closing... threads first check");
+            if (WaitingInfoP1_Thread != null)
+                Debug.WriteLine($"{WaitingInfoP1_Thread.IsAlive} - WaitingInfoP1_Thread alive?");
+            if (StartedCheck2_Thread != null)
+                Debug.WriteLine($"{StartedCheck2_Thread.IsAlive} - StartedCheck2_Thread alive?");
+            if (CheckingTurn2_Thread != null)
+                Debug.WriteLine($"{CheckingTurn2_Thread.IsAlive} - CheckingTurn2_Thread alive?");
+            if (ChangingTurn_Thread != null)
+                Debug.WriteLine($"{ChangingTurn_Thread.IsAlive} - ChangingTurn_Thread alive?");
+            //if (NewForm_Thread != null)         Debug.WriteLine($"{NewForm_Thread.IsAlive} - NewForm_Thread alive?");
+            if (Init_thread != null)
+                Debug.WriteLine($"{Init_thread.IsAlive} - Init_thread alive?");
+            //if (NewWindow_thread != null)       Debug.WriteLine($"{NewWindow_thread.IsAlive} - NewWindow_thread alive?");
+            //GameEnded_Thread
+
+            Debug.WriteLine("Closing... interrupting");
+            // thread still being interrupted and causing exception??
+            try
+            {
+                if (WaitingInfoP1_Thread != null)
+                    WaitingInfoP1_Thread.Interrupt(); //.Abort
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Thread exception: {ex.Message}");
+            }
+            try
+            {
+                if (StartedCheck2_Thread != null)
+                    StartedCheck2_Thread.Interrupt();
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Thread exception: {ex.Message}");
+            }
+            try
+            {
+                if (CheckingTurn2_Thread != null)
+                    CheckingTurn2_Thread.Interrupt();
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Thread exception: {ex.Message}");
+            }
+            try
+            {
+                if (ChangingTurn_Thread != null)
+                    ChangingTurn_Thread.Interrupt();
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Thread exception: {ex.Message}");
+            }
+            try
+            {
+                if (Init_thread != null)
+                    Init_thread.Interrupt();
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Thread exception: {ex.Message}");
+            }
+            /*
+            if (WaitingInfoP1_Thread != null)
+                WaitingInfoP1_Thread.Interrupt(); //.Abort
+            if (StartedCheck2_Thread != null)
+                StartedCheck2_Thread.Interrupt();
+            if (CheckingTurn2_Thread != null)
+                CheckingTurn2_Thread.Interrupt();
+            if (ChangingTurn_Thread != null)
+                ChangingTurn_Thread.Interrupt();
+            //if (NewForm_Thread != null) NewForm_Thread.Interrupt();
+            if (Init_thread != null)
+                Init_thread.Interrupt();
+            //if (NewWindow_thread != null) NewWindow_thread.Interrupt();
+            */
+
+            Debug.WriteLine("Closing... threads second check");
+            if (WaitingInfoP1_Thread != null)
+                Debug.WriteLine($"{WaitingInfoP1_Thread.IsAlive} - WaitingInfoP1_Thread alive?");
+            if (StartedCheck2_Thread != null)
+                Debug.WriteLine($"{StartedCheck2_Thread.IsAlive} - StartedCheck2_Thread alive?");
+            if (CheckingTurn2_Thread != null)
+                Debug.WriteLine($"{CheckingTurn2_Thread.IsAlive} - CheckingTurn2_Thread alive?");
+            if (ChangingTurn_Thread != null)
+                Debug.WriteLine($"{ChangingTurn_Thread.IsAlive} - ChangingTurn_Thread alive?");
+            //if (NewForm_Thread != null)         Debug.WriteLine($"{NewForm_Thread.IsAlive} - NewForm_Thread alive?");
+            if (Init_thread != null)
+                Debug.WriteLine($"{Init_thread.IsAlive} - Init_thread alive?");
+            //if (NewWindow_thread != null)       Debug.WriteLine($"{NewWindow_thread.IsAlive} - NewWindow_thread alive?");
+            Debug.WriteLine("..Threads closed");
+
+            // InfoLabel remove invoke (not using?)
+            // Invokes (not beginInvokes) create deadlocks, use dispose(waitHandle)?
+            if (IsHandleCreated)
+            {
+                if (InvokeRequired)
+                {
+                    // infoLabel
+                    //invokeInfoLabel("Quitting");
+                    IAsyncResult myResult = infoLabel.BeginInvoke((Action)(() =>
+                    {
+                        infoLabel.Text = "Quitting";
+                    }));
+                    Debug.WriteLine("infoLabel Invoke removed");
+                    infoLabel.EndInvoke(myResult);
+                }
+            }
+            // try/catch EndInvoke
+            //private delegate Bitmap EmbossDelegate(Bitmap bm);
+            //EmbossDelegate caller = Emboss;
+            //IAsyncResult result1 = caller.BeginInvoke(Images[0], null, null);
+            //pictureBox1.Image = caller.EndInvoke(result1);
+
+            //StartedCheck2_Thread.Interrupt();
+            //CheckingTurn2_Thread.Interrupt();
+            //ChangingTurn_Thread.Interrupt();
+            //NewForm_Thread.Interrupt();
+            //init_thread.Interrupt();
+            //newWindow_thread.Interrupt();
+
+            // reset server
+            if (iAmPlayer == 1)
+            {
+                Debug.WriteLine($"Setting defaults on server before closing");
+                MySQLConn.SetDefault();
+            }
+
+                // Try for second window closing issue
+                /*try
+                {
+                    Thread.Sleep(2000);
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"Thread exception: {ex.Message}");
+                }*/
+
+                // Debug
+                /*if (WaitingInfoP1_Thread != null)
+                {
+                    Debug.WriteLine($"{WaitingInfoP1_Thread.IsAlive} - WaitingInfoP1_Thread IsAlive");
+                    WaitingInfoP1_Thread.Interrupt();
+
+                    _shutdownEvent.Set();
+                    WaitingInfoP1_Thread.Join();
+                    Debug.WriteLine("Thread Stopped ");
+                    //WaitingInfoP1_Thread.Suspend();
+                    try
+                    {
+                        Debug.WriteLine($"{WaitingInfoP1_Thread.ThreadState} - WaitingInfoP1_Thread ThreadState");
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.WriteLine($"Thread exception: {ex.Message}");
+                    }
+                    try
+                    {
+                        Debug.WriteLine($"{WaitingInfoP1_Thread.IsBackground} - WaitingInfoP1_Thread IsBackground");
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.WriteLine($"Thread exception: {ex.Message}");
+                    }
+                    try
+                    {
+                        Debug.WriteLine($"{WaitingInfoP1_Thread.IsThreadPoolThread} - WaitingInfoP1_Thread IsThreadPoolThread");
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.WriteLine($"Thread exception: {ex.Message}");
+                    }
+
+                }*/
+                //Process.GetCurrentProcess().CloseMainWindow(); // normal
+                //Application.ExitThread(); // normal
+                //Process.GetCurrentProcess().Dispose(); // nothing?
+                //Process.GetCurrentProcess().Kill(true); // quits everything, Cannot be used to terminate a process tree containing the calling process
+
+                //Environment.Exit(Environment.ExitCode); // quits everything
+                //(persistent thread = Environment.Exit instead of Application.Exit)
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"On Form Closing Exception: {ex.Message}");
+            }
+            Debug.WriteLine($"Program closed: reason = {e.CloseReason}");
+            base.OnFormClosing(e);
         }
+        ManualResetEvent _shutdownEvent = new ManualResetEvent(false);
+        //protected virtual void OnFormClosing
+        //private void Form1_FormClosing(Object sender, FormClosingEventArgs e)
+
+
+
 
         // Check server running/ Player 1 chosen, other players wait
         public Form1()
         {
             InitializeComponent();
             //init();
+            formDefaults();
         }
+        public void formDefaults()
+        {
+            this.Text = "Memory Matching Game";
+            //info label
+            infoLabel.Text = "Welcome, press start/ join";
+            //restart button (Start Game)
+            restartBtn.Text = "Start Game";
+            //p1-p6 label
+            p1Label.Text = "Player 1";
+            p2Label.Text = "";
+            p3Label.Text = "";
+            p4Label.Text = "";
+            p5Label.Text = "";
+            p6Label.Text = "";
+            gameSizePanel.Visible = true;
+            serverBtnsPanel.Visible = true;
 
+            // Colours - other defaults set above
+            hiddenColour = label1.BackColor; // label1 = first clickable spot
+            oHiddenColour = hiddenColour; //this.BackColor;
+            //debugColour = hiddenColour;
+
+            if (debug)
+            {
+                Debug.WriteLine("-Debug colours used");
+                hiddenColour = Color.White; // Color.White = debug
+                oHiddenColour = hiddenColour;
+                //debugColour = Color.Green;
+            }
+
+            disableForm(); // both players start without able to click on form
+        }
+        // This is inside a thread
         public void init()
         {
-            MySQLConn.myForm = this;
+            MySQLConn.myForm = this; // Message box can close form
 
-            // set thisIsClosed
+            // set thisIsClosed?
 
             MySQLConn.ServerDataResetMessageBox();//SetDefault(); // ServerDataResetMessageBox
 
-            // For "Server" button
-            infoLabel.BeginInvoke((Action)(() => {
-                if (!thisIsClosed)
-                CheckGameRunning();
-            }));
-            if (thisIsClosed) // Cancel does this
+            // at top?
+            if (thisIsClosed) // Cancel does this?
                 this.Close();
 
-            // After checking game but before game started
-            // Colours - Set colours then make icon list and assign icons to squares
-            selectedColour = Color.Black;
-            hiddenColour = Color.White; //hiddenColour = this.BackColor;        // testing
-            assignedColour = Color.White;  //assignedColour = this.BackColor;   // testing
+            // For "Server" button
+            if (InvokeRequired)
+            {
+                // Using infoLabel beginInvoke to update all UI on a thread
+                infoLabel.BeginInvoke((Action)(() =>
+                {
+                    if (!thisIsClosed)
+                        CheckGameRunning();
+                }));
+            }
+            else
+            {
+                if (!thisIsClosed)
+                    CheckGameRunning();
+            }
         }
 
         public void CheckGameRunning()
@@ -127,16 +401,18 @@ namespace MMG
                 infoLabel.Text = "Game Already Started!";
                 restartBtn.Enabled = true;
                 restartBtn.Text = "Restart Client";
+                p1Label.Text = "";
+                gameSizePanel.Visible = false;
+                serverBtnsPanel.Visible = false;
 
-
+                // already disabled?
                 // Disable Form
                 //foreach (Label l in Form)
-                foreach (Control control in tableLayoutPanel1.Controls)
-                {
-                    Label iconLabel = control as Label;
-                    //iconLabel.Enabled = false; // ERROR?
-                }
-                Debug.WriteLine("1.2 ICONS DISABLED");
+                //foreach (Control control in tableLayoutPanel1.Controls)
+                //{
+                //    Label iconLabel = control as Label;
+                //    //iconLabel.Enabled = false; // ERROR?
+                //}
                 return;
             }
 
@@ -151,6 +427,11 @@ namespace MMG
                 // Restart enabled for player 1 only
                 // Restart is "Start Game" before start
 
+                // UI
+                //RBtnSize30.Visible
+                //gameSizePanel visible
+                //serverBtnsPanel visible
+
                 restartBtn.Enabled = true;
                 //restart();
                 restartBtn.Text = "Start Game";
@@ -158,10 +439,13 @@ namespace MMG
 
                 // add async infoLabel update for players joined
                 iAmPlayer = 1;
+                this.Text += $" - Player {iAmPlayer}"; // form title
 
                 // SQL
                 MySQLConn.SetIsGameClientRunning(true); // gameClientRunning = true
                 MySQLConn.AddPlayer(); // 1 player in game
+                // local
+                isGameClientRunning = true;
 
                 // stops from adding players on restart?
                 //if (iAmPlayer.ToString() == null)
@@ -175,14 +459,14 @@ namespace MMG
                 //Debug.WriteLine("Before ASYNC");
                 //UpdateWaitingInfo(); // Unable to do ASYNC??
                 //Debug.WriteLine("After ASYNC");
-                Thread newThread = new Thread(async delegate ()
+                WaitingInfoP1_Thread = new Thread(async delegate ()
                 {
                     //UpdateWaitingInfo(); // Async?
                     Debug.WriteLine("1.3 WaitingInfo thread started");
                     await Task.Run(() => WaitingInfoP1());
                     //WaitingInfo();
                 });
-                newThread.Start();
+                WaitingInfoP1_Thread.Start();
                 return;
             }
 
@@ -197,9 +481,14 @@ namespace MMG
                 //    iAmPlayer = MySQLConnection.playersCount;
                 //}
 
+                // UI
+                gameSizePanel.Visible = false;
+                serverBtnsPanel.Visible = false;
+
                 // SQL
                 MySQLConn.AddPlayer();// player = +1 of PlayersCount
                 iAmPlayer = MySQLConn.playersCount; // player 2
+                this.Text += $" - Player {iAmPlayer}"; // form title
 
                 MessageBox.Show($"You are player {iAmPlayer}");
                 // Every second other players check game has started
@@ -207,14 +496,14 @@ namespace MMG
                 // Asnyc - NOT WORKING
                 //GameStartedCheck();
                 //StartedCheck2();
-                Thread newThread = new Thread(async delegate ()
+                StartedCheck2_Thread = new Thread(async delegate ()
                 {
                     //GameStartedCheck(); // Async?
                     //await StartedCheck();
                     Debug.WriteLine("1.3 StartedCheck thread running");
                     await Task.Run(() => StartedCheck2()); // StartedCheck()
                 });
-                newThread.Start();
+                StartedCheck2_Thread.Start();
                 // Outside loop (Game started)
                 //SetupGame();
 
@@ -226,20 +515,48 @@ namespace MMG
         {
             //Debug.WriteLine("BeginAsync WaitingInfo");
 
-            // New thread
-            string waiting = "";
-            while (MySQLConn.isGameAlreadyStarted == false)
+            // Thread
+            int waiting = 0;
+            while (isGameAlreadyStarted == false) //MySQLConn.isGameAlreadyStarted == false)
             {
                 Debug.WriteLine(".");
+                Debug.WriteLine("1.4 Waiting for Players");
+
+                //if (InvokeRequired)
+                // Invoke label
+                //if (IsHandleCreated)
+                // Always synchronous.  (But you must watch out for cross-threading deadlocks!)
+                invokeInfoLabel($"You are Player {iAmPlayer} of {MySQLConn.playersCount}" +
+                                $"\nWaiting for players to join" +
+                                $"\nYou have been waiting for {waiting} seconds in the lobby");
+                if (InvokeRequired)
+                {
+                    infoLabel.BeginInvoke((Action)(() =>
+                    {
+                        PlayersScoresWaiting(); // update UI as players join
+                    }));
+                }
+                else
+                {
+                    PlayersScoresWaiting();
+                }
+
+                //if (InvokeRequired)
+                //{
+                //    infoLabel.BeginInvoke((Action)(() =>
+                //    {
+                //        infoLabel.Text = $"Waiting for Players {waiting}" +
+                //                     $"\nPlayers = {MySQLConn.playersCount}";
+                //    }));
+                //}
                 // not working?
                 //Task.Delay(5000).Wait();
                 //MySQLConn.CheckGameState
-                Debug.WriteLine("1.4 Waiting for Players");
                 try
                 {
                     if (MySQLConn.conn.State == System.Data.ConnectionState.Closed)
                     {
-                        MySQLConn.CheckGameState(); // this after Thread causes Error - cannot connect to server?
+                        //MySQLConn.CheckGameState(); // this after Thread causes Error - cannot connect to server?
                         MySQLConn.CheckPlayersCount();
                     }
                 }
@@ -247,19 +564,26 @@ namespace MMG
                 {
                     Debug.WriteLine($"Exception: {e.Message}");
                 }
-                Thread.Sleep(4000);
 
+                // a repeat to update quicker
+                invokeInfoLabel($"You are Player {iAmPlayer} of {MySQLConn.playersCount}" +
+                                $"\nWaiting for players to join" +
+                                $"\nYou have been waiting for {waiting} seconds in the lobby");
+                // Stops "Handle required" exception
                 //if (InvokeRequired)
                 //{
-                //    //Debug.WriteLine("Waiting InvokeRequired");
+                //    // second update after
+                //    infoLabel.BeginInvoke((Action)(() =>
+                //    {
+                //        infoLabel.Text = $"Waiting for Players {waiting}" +
+                //                     $"\nPlayers = {MySQLConn.playersCount}";
+                //    }));
                 //}
-                // Invoke label
-                //infoLabel.BeginInvoke(new Action(() => infoLabel.Text = "new text"));
-                infoLabel.BeginInvoke((Action)(() => {
-                    infoLabel.Text = $"Waiting for Players {waiting}" +
-                                 $"\nPlayers = {MySQLConn.playersCount}";
-                }));
-                waiting += ".";
+                //Thread.Sleep(4000);
+                Task.Delay(4000).Wait();
+
+
+                waiting++; //+= ".";
                 Debug.WriteLine(".");
             }
             // Stop waiting for players
@@ -272,10 +596,14 @@ namespace MMG
             //infoLabel.Text = $"Waiting for Players ..";
             Debug.WriteLine(".EndAsync WaitingInfo");
         }
+        bool isGameAlreadyStarted = false; // used only for WaitingInfo
+        bool isGameClientRunning = false; // used only for P1
 
         // restart/ new game/ restart client button
         public void Restart()
         {
+            //MySQLConn.CheckGameState(); // no longer checked in WaitingInfo
+
             Debug.WriteLine("2. Start game pressed...");
             // Check state already done in update info thread
             //MySQLConn.CheckGameState(); // maybe do this in WaitingInfoP1 so that state is updated
@@ -291,7 +619,28 @@ namespace MMG
                 // Midgame restart
                 if (iAmPlayer == 1)
                 {
-                    MySQLConn.SetDefault();
+                    bool isFinished = false;
+
+                    while (isFinished == false)
+                    {
+                        try
+                        {
+                            if (MySQLConn.conn.State == System.Data.ConnectionState.Closed)
+                            {
+                                MySQLConn.SetDefault();
+                                Debug.WriteLine("Midgame restart - finished");
+                                isFinished = true;
+                            }
+                        }
+                        catch (Exception e)
+                        {
+                            Debug.WriteLine($"Midgame restart - Exception: {e.Message}");
+                            Thread.Sleep(1000);
+                            Debug.WriteLine($"Midgame restart - try again");
+                            Thread.Sleep(1000);
+                        }
+                    }
+                    
                     //MySQLConn.NewGame();
                     //MySQLConn.SetIsGameAlreadyStarted(false);
                     Debug.Print("2.2 Restarted");
@@ -301,24 +650,38 @@ namespace MMG
                 //this.Visible = false;
                 //FormIssueTracker mySecondForm = new FormIssueTracker();
 
+                // Player 1/ 2 restart
                 Debug.WriteLine("2.2 New form/ quit");
-                // ?Perhaps don't use a new thread
-                Thread newThread = new Thread(delegate ()
+                // ?use task instead of thread?
+                NewForm_Thread = new Thread(delegate ()
                 {
                     Application.Run(new Form1()); //FormIssueTracker
                 });
 
-                newThread.Start();
+                NewForm_Thread.Start();
                 this.Close();
                 return; // unreachable?
             }
 
             // Start pressed, Player 1 started, not started game with players //gameAlreadyStarted is false
-            if (MySQLConn.isGameClientRunning)
+            if (isGameClientRunning)//MySQLConn.isGameClientRunning)
             {
                 Debug.WriteLine("2.1 Game Started");
+
+                // thread stop updating infoLabel
+                //WaitingInfoP1Thread.Abort();// Not in .NET Core
+                //WaitingInfoP1Thread.Interrupt();
+                //Debug.WriteLine("Thread stopped - WaitingInfoP1Thread");
+                isGameAlreadyStarted = true; // set false at end of game?
+                // wait?
+
                 // Start game/ restart
                 infoLabel.Text = "Game Started";
+                Debug.WriteLine($"2.2 Board Size - {boardSize}");
+                // UI
+                gameSizePanel.Visible = false;//gameSizePanel not visible
+                //serverBtnsPanel visible
+
 
                 // MySQLConnection.NewGame 
                 MySQLConn.NewGame(); // set playersCount, Scores<list>, playersTurn = 1, isGameAlreadyStarted true
@@ -332,7 +695,6 @@ namespace MMG
                 playerTurn = MySQLConn.playerTurn;
                 // Update Table
                 restartBtn.Text = "Restart";
-
                 Debug.WriteLine("2.2 Game Started - New game info set, P1 form set");
                 SetupGameP1();
                 // At end of game set gameAlreadyStarted=false
@@ -344,36 +706,80 @@ namespace MMG
         public void SetupGameP1()
         {
             // Local settings
+
+            // Enable form
+            //if (InvokeRequired) infoLabel.BeginInvoke((Action)(() => disableForm()));
+            enableForm();
+
             //playerTurn = 1; // set by NewGame?
             PlayersScoresInit(); // Needed? init playersScores to 0
             AddPLabels(); // Set labels to player count and set each player label to player score
             // Colours - Set colours then make icon list and assign icons to squares
-            selectedColour = Color.Black;
-            hiddenColour = Color.White; //hiddenColour = this.BackColor;        // testing
-            assignedColour = Color.White;  //assignedColour = this.BackColor;   // testing
+            // .. removed
+
             // -------------------------Make this board the same for everyone (iconsLayout)-------------------------
             // Setup game board
             MakeListOfIcons();
             AssignIconsToSquares(); // Set grid, random
 
-            // Set P1 label active
-            resetPlayerLabelsColour();
-            infoLabel.Text = "Game Started! Player 1 turn";
+            SetAllActiveCardsIcons(); // set all cards to background ([)
+
+            resetPlayerLabelsColour(); //pLabels
+            SetScoresLocalUI(); // adds (ME)
+
+            // Set P1 label active - labels not updating, need invoke
+            invokeInfoLabel($"Game Started! Player 1 turn");
+            //if (InvokeRequired)
+            //{
+            //    infoLabel.BeginInvoke((Action)(() =>
+            //    {
+            //        infoLabel.Text = $"Game Started! Player 1 turn";
+            //    }));
+            //}
+            //UpdateUI(); // doesn't work
+            //infoLabel.Text = "Game Started! Player 1 turn"; // needs invoke to update
+
+            if (debug)
+            {
+                //SetAllIconsBG(debugColour); // UI for player waiting (not showing icons)
+                SetAllIconsColours(debugColour);
+            }
+
             // Player 1 start/ play
             Debug.WriteLine("3. P1 game setup, Player 1 Start/ play");
         }
-        
+
         // Other player waiting info
         public void StartedCheck2()
         {
-            string waiting = "";
+            int waiting = 0;
             while (MySQLConn.isGameAlreadyStarted == false)
             {
                 Debug.WriteLine("Waiting for P1 to start");
-                infoLabel.BeginInvoke((Action)(() => {
-                    infoLabel.Text = $"Waiting for Player 1 to Start The Game {waiting}" +
-                                 $"\nPlayers = {MySQLConn.playersCount}";
-                }));
+
+                invokeInfoLabel($"You are Player {iAmPlayer} of {MySQLConn.playersCount}" +
+                                $"\nWaiting for Player 1 to Start The Game" +
+                                $"\nYou have been waiting for {waiting} seconds in the lobby");
+                if (InvokeRequired)
+                {
+                    infoLabel.BeginInvoke((Action)(() =>
+                    {
+                        PlayersScoresWaiting(); // update UI as players join
+                    }));
+                }
+                else
+                {
+                    PlayersScoresWaiting();
+                }
+                if (InvokeRequired) infoLabel.BeginInvoke((Action)(() => restartBtn.Visible = false));
+                //if (InvokeRequired)
+                //{
+                //    infoLabel.BeginInvoke((Action)(() =>
+                //    {
+                //        infoLabel.Text = $"Waiting for Player 1 to Start The Game {waiting}" +
+                //                     $"\nPlayers = {MySQLConn.playersCount}";
+                //    }));
+                //}
                 Thread.Sleep(2000); //4000
 
                 MySQLConn.CheckGameState();
@@ -384,16 +790,22 @@ namespace MMG
 
                 //Task.Delay(1000).Wait();
                 // Animated "..."
-                waiting += ".";
+                waiting++; //+= ".";
                 //if (waiting.Contains("..."))
                 //{
                 //    waiting += "";
                 //}// exception?
             }
-            infoLabel.BeginInvoke((Action)(() => {
-                // game started, now what? update info label...
-                infoLabel.Text = "Game Started, P1 turn!";
-            }));
+
+            // game started, now what? update info label...
+            invokeInfoLabel("Game Started, P1 turn!");
+            //if (InvokeRequired)
+            //{
+            //    infoLabel.BeginInvoke((Action)(() =>
+            //    {
+            //        infoLabel.Text = "Game Started, P1 turn!";
+            //    }));
+            //}
             // Outside loop (Game started)
             SetupGameOtherPlayer();
         }
@@ -405,7 +817,13 @@ namespace MMG
             //MySQLConn.CheckGame();
             // Set playersCount, playerTurn, playersScores, playersScores Labels, grid colours, 
             //playersCount = MySQLConn.playersCount; //# mySQL playersCount
-            
+
+            // set ui first?
+
+            // Disable form, already done?
+            //if (InvokeRequired) infoLabel.BeginInvoke((Action)(() => disableForm()));
+            //if (InvokeRequired) infoLabel.BeginInvoke((Action)(() => restartBtn.Visible = false));
+
             // Local settings
             playerTurn = 1;
             MySQLConn.CheckTurn();
@@ -416,46 +834,110 @@ namespace MMG
             //playersScores = MySQLConn.playersScores;//new int[playersCount]; // still null??
             PlayersScoresInit(); // Needed? init playersScores to 0
             // p1Label
-            infoLabel.BeginInvoke((Action)(() => {
-                AddPLabels(); // Set labels to player count and set each player label to player score
+
+            invokeInfoLabel("Game Started! Player 1 turn");
+            if (InvokeRequired)
+            {
+                infoLabel.BeginInvoke((Action)(() =>
+                {
+                    AddPLabels(); // Set labels to player count and set each player label to player score
 
 
-                // Colours - Set colours then make icon list and assign icons to squares
-                selectedColour = Color.Black;
-                hiddenColour = Color.White; //hiddenColour = this.BackColor;        // testing
-                assignedColour = Color.White;  //assignedColour = this.BackColor;   // testing
-                // -------------------------Make this board the same for everyone (iconsLayout)-------------------------
-                // Setup game board
+                    // Colours - Set colours then make icon list and assign icons to squares
+                    // .. removed
+                    // -------------------------Make this board the same for everyone (iconsLayout)-------------------------
+                    // Setup game board
+                    MakeListOfIcons();
+                    AssignIconsToSquares(); // Set grid, random
+
+
+                    resetPlayerLabelsColour(); // set twice?
+
+                    SetAllIconsBG(bgColour);
+                    SetAllIconsColours(bgColour);
+                    if (debug)
+                    {
+                        SetAllIconsColours(debugColour); // here and underin thread?
+                    }
+                    //infoLabel.Text = "Game Started! Player 1 turn";
+                }));
+            }
+            else
+            {
+                AddPLabels();
+                //selectedColour... removed
                 MakeListOfIcons();
-                AssignIconsToSquares(); // Set grid, random
+                AssignIconsToSquares();
+                resetPlayerLabelsColour(); // error
+                SetAllIconsBG(bgColour);
+                SetAllIconsColours(bgColour);
+                if (debug)
+                {
+                    SetAllIconsColours(debugColour);
+                }
+            }
 
-
-                resetPlayerLabelsColour();
-
-                //infoLabel.BeginInvoke((Action)(() => {
-                infoLabel.Text = "Game Started! Player 1 turn";
-            }));
-            
-            // Is this a thread starting a new thread?
+            // Is this a thread starting a new one?
             // Async - NOT WORKING
-            Thread newThread = new Thread(async delegate ()
+            CheckingTurn2_Thread = new Thread(async delegate ()
             {
                 //GameStartedCheck(); // Async?
                 //await StartedCheck();
                 //await Task.Run(() => StartedCheck()); // CheckingTurn()
                 Debug.WriteLine("Checking turn for other player - thread started");
-                
-                resetPlayerLabelsColour(); //also does - pLabels[MSQLConn.playerTurn - 1].ForeColor = Color.Red;
+
+                //resetPlayerLabelsColour(); //also does - pLabels[MSQLConn.playerTurn - 1].ForeColor = Color.Red;
                 // Set colours of table (not clickable)
-                SetAllIconsColours(Color.Green); // does not work??
-                Debug.WriteLine("-GREEN SET");
+                //SetAllIconsColours(Color.Green); // does not work??
                 await Task.Run(() => CheckingTurn2());
-                
+
             });
-            newThread.Start();
+            CheckingTurn2_Thread.Start();
             //CheckingTurn2(); //GameLoop();
             //setScores(); // only after scoring
             //p1Label.Text = "10"; //p2Label.Text = "11";
+        }
+        private void invokeInfoLabel(string message)
+        {
+            if (InvokeRequired)
+            {
+                infoLabel.BeginInvoke((Action)(() =>
+                {
+                    infoLabel.Text = message;
+                }));
+            }
+            else
+            {
+                infoLabel.Text = message;
+            }
+        }
+        private void invokeFormEnable(bool enable)
+        {
+            if (InvokeRequired)
+            {
+                infoLabel.BeginInvoke((Action)(() =>
+                {
+                    if (enable)
+                    {
+                        enableForm();
+                    }
+                    else
+                    {
+                        disableForm();
+                    }
+                }));
+            }
+            else
+            {
+                if (enable)
+                {
+                    enableForm();
+                }
+                else
+                {
+                    disableForm();
+                }
+            }
         }
 
         /*public async void UpdateWaitingInfo()
@@ -469,7 +951,7 @@ namespace MMG
             //await Task.Run(WaitingInfo);
         }
         */
-        
+
 
         // Waiting for start of game
         /*public async Task GameStartedCheck()
@@ -571,13 +1053,23 @@ namespace MMG
         public void CheckingTurn2()
         {
             // if not my turn
+            int waiting = 0;
             while (playerTurn != iAmPlayer) // Not this players turn
             {
                 Debug.WriteLine(".");
                 // Update turn, update score, check for game ended
-                Debug.WriteLine("Not my turn, Waiting");
+                Debug.WriteLine("Not my turn, Waiting"); // not your turn
+
+                invokeInfoLabel($"Please wait..." +
+                                $"\nPlayer {MySQLConn.playerTurn}'s turn" +
+                                $"\nYou have waited {waiting} seconds for your turn");
+                waiting++;
+                // Disable form
+                //if (InvokeRequired) infoLabel.BeginInvoke((Action)(() => disableForm()));
+                invokeFormEnable(false);
+
                 Thread.Sleep(4000); ///Task.Delay(3000).Wait();
-                
+
                 // update turn
                 MySQLConn.CheckTurn();
                 playerTurn = MySQLConn.playerTurn; // MySQL (playerTurn=1)
@@ -586,40 +1078,141 @@ namespace MMG
                 MySQLConn.CheckScores();
                 playersScores = MySQLConn.playersScores; // ref?
 
-            infoLabel.BeginInvoke((Action)(() => {
-                infoLabel.Text += "."; // Waiting
+                // works?
+                invokeInfoLabel(infoLabel.Text + ".");
+                if (InvokeRequired)
+                {
+                    infoLabel.BeginInvoke((Action)(() =>
+                    {
+                        //infoLabel.Text += "."; // Waiting
+                        SetScoresLocalUI(); // set ui
 
-                SetScoresLocalUI(); // set ui
-            }));
+                        SetAllIconsBG(bgColour); // UI for player waiting (not showing icons)
+                        SetAllIconsColours(bgColour);
+                        if (debug)
+                        {
+                            SetAllIconsColours(debugColour); // moved up to see quicker
+                        }
+                    }));
+                }
+                else
+                {
+                    //infoLabel.Text += "."; // Waiting
+                    SetScoresLocalUI(); // set ui
+
+                    SetAllIconsBG(bgColour);
+                    SetAllIconsColours(bgColour);
+                    if (debug)
+                    {
+                        SetAllIconsColours(debugColour); // moved up to see quicker
+                    }
+                }
                 // update table...
                 //?
+                SetAllIconsBG(bgColour);
+                SetAllIconsColours(bgColour);
+                if (debug)
+                {
+                    SetAllIconsColours(debugColour); // moved up to see quicker
+                }
 
+                MySQLConn.CheckGameState();
                 // Game Ended
-                if (MySQLConn.isGameAlreadyStarted == false)
+                if (MySQLConn.isGameAlreadyStarted == false || MySQLConn.playerTurn == 0)
                 {
                     // Message box somebody won
-                    WinningMessageBox();
+
+                    if (InvokeRequired)
+                    {
+                        infoLabel.BeginInvoke((Action)(() =>
+                        {
+                            SetAllIconsNull(); // label25
+                            WinningMessageBox(); // this after icons removed?
+                        }));
+                    }
+                    else
+                    {
+                        SetAllIconsNull(); // label25
+                        WinningMessageBox(); // this after icons removed?
+                    }
+                    Debug.WriteLine("OTHER PLAYER WON!");
                     return; // check this exits both the while and GameLoop()
                 }
-                SetAllIconsColours(Color.Green);
                 Debug.WriteLine(".");
             }
 
             // Your Turn! - update scores, enable labels
             // (outside loop)
+
+            // Enable form
+            invokeFormEnable(true);
+            //if (InvokeRequired) infoLabel.BeginInvoke((Action)(() => enableForm()));
+
             MySQLConn.CheckScores();
             playersScores = MySQLConn.playersScores;
+            if (InvokeRequired)
+            {
+                infoLabel.BeginInvoke((Action)(() =>
+                {
+                    resetPlayerLabelsColour();
+                    //SetAllIconsColours(Color.White); // black = disabled
+                    SetAllIconsBG(hiddenColour);
+                    SetAllIconsColours(hiddenColour);
+                    // debug set colour?
+                    if (debug)
+                    {
+                        SetAllIconsColours(debugColour);
+                    }
+                }));
+            }
+            else
+            {
+                resetPlayerLabelsColour();
+                //SetAllIconsColours(Color.White); // black = disabled
+                SetAllIconsBG(hiddenColour);
+                SetAllIconsColours(hiddenColour);
+                // debug set colour?
+                if (debug)
+                {
+                    SetAllIconsColours(debugColour);
+                }
+            }
+            
+            invokeInfoLabel("Your turn!");
+            //infoLabel.Text = "Your turn!";
+            //Debug.WriteLine("Your turn!");
+            if (InvokeRequired)
+            {
+                infoLabel.BeginInvoke((Action)(() =>
+                {
+                    SetScoresLocalUI(); // just for ui
+                }));
+            }
+            else
+            {
+                SetScoresLocalUI(); // just for ui
+            }
+        }
 
-            resetPlayerLabelsColour();
-            SetAllIconsColours(Color.White); // black = disabled
+        public void PlayersScoresWaiting()
+        {
+            if (pLabels.Count == 0)
+            {
+                // should only happen once
+                AddPLabels();
+                Debug.WriteLine("NEW p labels");
+            }
 
-
-            infoLabel.BeginInvoke((Action)(() => {
-                infoLabel.Text = "Your turn!";
-            Debug.WriteLine("Your turn!");
-            SetScoresLocalUI(); // just for ui
-
-            }));
+            for (int i = 0; i < MySQLConn.playersCount; i++)
+            {
+                pLabels[i].Text = $"Player {i + 1}";
+            }
+            pLabels[iAmPlayer - 1].ForeColor = iAmPlayerColour;
+            pLabels[iAmPlayer - 1].Text += $"\n{youMessage}";
+            if (MySQLConn.playerTurn > 0)
+            {
+                pLabels[MySQLConn.playerTurn - 1].ForeColor = selectedPlayerColour;
+            }
         }
 
         public void PlayersScoresInit()
@@ -638,23 +1231,30 @@ namespace MMG
             pLabels.Add(p5Label);
             pLabels.Add(p6Label);
             // Reset all values
-            for (int i = 0; i <= pLabels.Count-1; i++)
+            for (int i = 0; i <= pLabels.Count - 1; i++)
             {
                 pLabels[i].Text = "";
             }
             // Needed? // Set each label to player score
             for (int i = 0; i < MySQLConn.playersCount; i++)
             {
-                pLabels[i].Text = $"Player {i + 1}: {playersScores[i].ToString()}";
+                pLabels[i].Text = $"Player {i + 1}" +
+                                  $"\nScore: {playersScores[i].ToString()}";
+            }
+            pLabels[iAmPlayer - 1].ForeColor = iAmPlayerColour;
+            pLabels[iAmPlayer - 1].Text += $"\n{youMessage}";
+            if (MySQLConn.playerTurn > 0) // cannot use if no players
+            {
+                pLabels[MySQLConn.playerTurn - 1].ForeColor = selectedPlayerColour;
             }
         }
         private void MakeListOfIcons()
         {
             foreach (string icon in iconToMake)
             {
-                icons.Add(icon);
-                icons.Add(icon);
-                icons.Add(icon);
+                gameIcons.Add(icon);
+                gameIcons.Add(icon);
+                gameIcons.Add(icon);
 
                 //iconsLayout.Add(icon);
                 //iconsLayout.Add(icon);
@@ -681,12 +1281,77 @@ namespace MMG
             //    pLabels[i].ForeColor = Color.Black; // starts at 0??
             //}
             //pLabels[MySQLConn.playerTurn - 1].ForeColor = Color.Red;
-            
+
             for (int i = 0; i < MySQLConn.playersCount; i++)
             {
                 pLabels[i].ForeColor = Color.Black; // starts at 0
             }
-            pLabels[MySQLConn.playerTurn - 1].ForeColor = Color.Red;
+            pLabels[iAmPlayer - 1].ForeColor = iAmPlayerColour;
+            pLabels[iAmPlayer - 1].Text += $"\n{youMessage}";
+            if (MySQLConn.playerTurn > 0)
+            {
+                pLabels[MySQLConn.playerTurn - 1].ForeColor = selectedPlayerColour;
+            }
+        }
+
+        // same as SetAllActiveCardsIcons()
+        private void HideIconsOnSquares()
+        {
+            foreach (Control control in tableLayoutPanel1.Controls)
+            {
+                Label iconLabel = control as Label;
+
+                // Column 0 and row 6 are for buttons, ignore labels there
+                if (iconLabel != null &&
+                    tableLayoutPanel1.GetColumn(control) != 0 &&
+                    tableLayoutPanel1.GetRow(control) != endRow)
+                {
+                    // only if card is still active
+                    if(iconLabel.Text != "")
+                        iconLabel.Text = "["; // or {
+                }
+            }
+        }
+        private void ReAssignIconsToSquares(Label clickedLabel)
+        {
+
+            //foreach (Control control in tableLayoutPanel1.Controls)
+            //{
+            //    Label iconLabel = control as Label;
+            //    int i = 0;
+
+            //    // Column 0 and row 6 are for buttons, ignore labels there
+            //    if (iconLabel != null &&
+            //        tableLayoutPanel1.GetColumn(control) != 0 &&
+            //        tableLayoutPanel1.GetRow(control) != endRow)
+            //    {
+
+            //        //int randomNumber = random.Next(icons.Count);
+            //        iconLabel.Text = gameIcons[i];
+            //        //iconLabel.ForeColor = hiddenColour;//iconLabel.BackColor; // set invisible
+
+            //        //iconsLayout[randomNumber] = icons[randomNumber];
+            //        i++;
+            //    }
+            //}
+
+            foreach (var item in gameIconsLayout)
+            {
+                //item.Find(clickedLabel.Name)
+
+                // Not blank
+                //if (item.Find(x => x.Contains(clickedLabel.Name)) != "")// default T - ""?
+                if (item.Contains(clickedLabel.Name))// default T - ""?
+                {
+                    Debug.WriteLine("Found somewhere?");
+                    // matches label name
+                    if (item[1] == clickedLabel.Name)
+                    {
+                        clickedLabel.Text = item[0];
+                        Debug.WriteLine("Found?"); // working!
+                    }
+                }
+            }
         }
         // Assign each icon from the list of icons to a random square
         private void AssignIconsToSquares()
@@ -698,18 +1363,51 @@ namespace MMG
                 Label iconLabel = control as Label;
 
                 // Column 0 and row 6 are for buttons, ignore labels there
-                if (iconLabel != null && 
-                    tableLayoutPanel1.GetColumn(control) != 0 && 
-                    tableLayoutPanel1.GetRow(control) != 6)
+                if (iconLabel != null &&
+                    tableLayoutPanel1.GetColumn(control) != 0 &&
+                    tableLayoutPanel1.GetRow(control) != endRow)
                 {
-                    int randomNumber = random.Next(icons.Count);
-                    iconLabel.Text = icons[randomNumber];
-                    iconLabel.ForeColor = assignedColour;//iconLabel.BackColor; // set invisible
+                    int randomNumber = random.Next(gameIcons.Count);
+                    iconLabel.Text = gameIcons[randomNumber];
+                    iconLabel.ForeColor = hiddenColour;//iconLabel.BackColor; // set invisible
 
-                    //iconsLayout[randomNumber] = icons[randomNumber];
-                    icons.RemoveAt(randomNumber);
+                    //gameIconsLayout[randomNumber] = gameIcons[randomNumber];
+                    AddToGameIconsLayout(iconLabel.Text, iconLabel.Name);
+                    gameIcons.RemoveAt(randomNumber);
                 }
             }
+            Debug.WriteLine("LIST LIST DONE");
+        }
+        private void AddToGameIconsLayout(string labelName, string icon)
+        {
+            //SetGameIconsLayout();
+            List<string> temp = new List<string>();
+            temp.Add($"{labelName}");
+            temp.Add($"{icon}");
+            // etc
+            gameIconsLayout.Add(temp);
+        }
+        private void SetAllActiveCardsIcons()
+        {
+            foreach (Control control in tableLayoutPanel1.Controls)
+            {
+                Label iconLabel = control as Label;
+
+                // Column 0 and row 6 are for buttons, ignore labels there
+                if (iconLabel != null &&
+                    tableLayoutPanel1.GetColumn(control) != 0 &&
+                    tableLayoutPanel1.GetRow(control) != endRow &&
+                    iconLabel.Text != "" ) 
+                {
+                    iconLabel.Text = "[";
+                    //iconLabel.ForeColor = hiddenColour;//iconLabel.BackColor; // set invisible
+                }
+            }
+        }
+        private void SetGameIconsLayout()
+        {
+            // for each
+            //gameIconsLayout[randomNumber] = gameIcons[randomNumber];
         }
         private void SetAllIconsColours(Color color)
         {
@@ -722,9 +1420,42 @@ namespace MMG
                 // Column 0 and row 6 are for buttons, ignore labels there
                 if (iconLabel != null &&
                     tableLayoutPanel1.GetColumn(control) != 0 &&
-                    tableLayoutPanel1.GetRow(control) != 6)
+                    tableLayoutPanel1.GetRow(control) != endRow)
                 {
                     iconLabel.ForeColor = color;//iconLabel.BackColor;
+                }
+            }
+        }
+        private void SetAllIconsBG(Color color)
+        {
+            // The TableLayoutPanel has 16 labels, and the icon list has 16 icons,
+            // so an icon is pulled at random from the list and added to each label
+            foreach (Control control in tableLayoutPanel1.Controls)
+            {
+                Label iconLabel = control as Label;
+
+                // Column 0 and row 6 are for buttons, ignore labels there
+                if (iconLabel != null &&
+                    tableLayoutPanel1.GetColumn(control) != 0 &&
+                    tableLayoutPanel1.GetRow(control) != endRow)
+                {
+                    iconLabel.BackColor = color;//iconLabel.BackColor;
+                }
+            }
+        }
+        private void SetAllIconsNull()
+        {
+            foreach (Control control in tableLayoutPanel1.Controls)
+            {
+                Label iconLabel = control as Label;
+
+                // Column 0 and row 6 are for buttons, ignore labels there
+                if (iconLabel != null &&
+                    tableLayoutPanel1.GetColumn(control) != 0 &&
+                    tableLayoutPanel1.GetRow(control) != endRow)
+                {
+                    iconLabel.Text = "";
+                    iconLabel.ForeColor = hiddenColour;//iconLabel.BackColor; // set invisible
                 }
             }
         }
@@ -740,14 +1471,21 @@ namespace MMG
             // Set each label to player score
             for (int i = 0; i < MySQLConn.playersCount; i++)
             {
-                pLabels[i].Text = $"Player {i + 1}: {playersScores[i].ToString()}";
+                pLabels[i].Text = $"Player {i + 1}" +
+                                  $"\nScore: {playersScores[i].ToString()}";
 
                 // Add "ME" next to your score
-                if (i == iAmPlayer - 1)//playerTurn - 1)
-                {
-                    pLabels[i].Text += $" - (ME)";
-                    //pLabels[playerTurn - 1].Text += "- (ME)"
-                }
+                //if (i == iAmPlayer - 1)//playerTurn - 1)
+                //{
+                //    pLabels[i].Text += $" - (ME)";
+                //    //pLabels[playerTurn - 1].Text += "- (ME)"
+                //}
+            }
+            pLabels[iAmPlayer - 1].ForeColor = iAmPlayerColour;
+            pLabels[iAmPlayer - 1].Text += $"\n{youMessage}";
+            if (MySQLConn.playerTurn > 0)
+            {
+                pLabels[MySQLConn.playerTurn - 1].ForeColor = selectedPlayerColour;
             }
         }
         public void SetScores()
@@ -761,6 +1499,8 @@ namespace MMG
             //pLabels[player - 1].Text += " - Your Turn";
             //}
         }
+
+
 
         // Every label's Click event is handled by this event handler
         private void label_Click(object sender, EventArgs e)
@@ -787,7 +1527,9 @@ namespace MMG
 
             // The timer is only on after three non-matching icons have been shown to the player, 
             // so ignore any clicks if the timer is running
-            if (timer1.Enabled == true)
+            
+
+            if (timer1.Enabled == true || isClickingDisabled)
                 return;
 
             // Clicked
@@ -802,10 +1544,45 @@ namespace MMG
             // else 3 different icons, reset
             if (clickedLabel != null)
             {
+
+                // do this for all clicks?
+                //List<string> temp = new List<string>();
+                //temp.Add(clickedLabel.Name);
+
+                // This makes correct symbol appear only when clicked
+                //foreach (var item in gameIconsLayout)
+                //{
+                //    //item.Find(clickedLabel.Name)
+
+                //    // Not blank
+                //    if (item.Find(x => x.Contains(clickedLabel.Name)) != "")// default T - ""?
+                //    {
+                //        Debug.WriteLine("Found? blank");
+                //        // matches label name
+                //        if (item[0] == clickedLabel.Name)
+                //        {
+                //            clickedLabel.Text = item[0];
+                //            Debug.WriteLine("Found?");
+                //        }
+                //    }
+                //}
+
                 // If the clicked label is black, the player clicked an icon that's already been revealed --
                 // ignore the click
-                if (clickedLabel.ForeColor == selectedColour)
+
+                // NO LONGER NEED, all is set to black now
+                //if (clickedLabel.ForeColor == selectedColour)
+                //    return;
+
+                // if no back image, cannot click
+                if (clickedLabel.Text != "[")
+                {
+                    Debug.WriteLine("No back image");
                     return;
+                }
+
+                // Otherwise continue
+                ReAssignIconsToSquares(clickedLabel);
 
                 // If firstClicked is null, this is the first icon in the trio that the player clicked, 
                 // so set firstClicked to the label that the player clicked, change its color to black, and return
@@ -828,12 +1605,30 @@ namespace MMG
                     return;
                 }
 
-
+                // Not showing selectedColour on 3rd clicked
                 // Third click
+
+                //// do this for all clicks?
+                //List<string> temp = new List<string>();
+                //temp.Add(clickedLabel.Name);
+                //foreach (var item in gameIconsLayout)
+                //{
+                //    //item.Find(clickedLabel.Name)
+                //    if (item.Find(x => x.Contains(clickedLabel.Name)) != "")// default T - ""?
+                //    {
+                //        clickedLabel.Text = item[0];
+                //        Debug.WriteLine("Changing turn, CheckingTurn2 thread started");
+                //    }                   
+                //}
+
+                //clickedLabel.Text = gameIconsLayout[gameIconsLayout.Find(clickedLabel.Name)][1];
+                //System.InvalidOperationException: 'Failed to compare two elements in the array.'
+                //clickedLabel.Text = gameIconsLayout[gameIconsLayout.BinarySearch(temp)][1]; // 0 = letter, 1 = name?
                 thirdClicked = clickedLabel;
                 thirdClicked.ForeColor = selectedColour;
-
-
+                thirdClicked.Refresh(); // doesn't update otherwise
+                //UpdateUI(thirdClicked);
+                // this takes time??
 
 
                 // After clicks, check same/ different selected icons
@@ -842,10 +1637,12 @@ namespace MMG
                 // If the player clicked three matching icons, keep them black 
                 //  and reset firstClicked and secondClicked and thirdClicked
                 // so the player can click another icon
-                if (firstClicked.Text == secondClicked.Text && 
+                if (firstClicked.Text == secondClicked.Text &&
                     secondClicked.Text == thirdClicked.Text)
                 {
+                    disableForm(); // stop more clicks
                     PlayerScored();
+                    enableForm();
                     return;
                 }
 
@@ -867,9 +1664,27 @@ namespace MMG
                 // 3 different icons
                 // If the player gets this far, the player clicked three different icons,
                 // so start the timer (which will wait three quarters of a second, and then hide the icons)
-                timer1.Start(); // Hides icons
+                //timer1.Start(); // Hides icons
+                hideIcons();
             }
         }
+        private void UpdateUI(Label ui)
+        {
+            //lblStatus.Text = status;
+            ui.Invalidate();
+            ui.Update();
+            ui.Refresh();
+            Application.DoEvents();
+        }
+        private void UpdateUI()
+        {
+            //lblStatus.Text = status;
+            infoLabel.Invalidate();
+            infoLabel.Update();
+            infoLabel.Refresh();
+            Application.DoEvents();
+        }
+
         private void PlayerScored()
         {
             // This player wins cards
@@ -877,7 +1692,7 @@ namespace MMG
             //p1Label.Text += $"{firstClicked.Text} {secondClicked.Text} {thirdClicked.Text}";
 
             //System.NullReferenceException: 'Object reference not set to an instance of an object.'
-            if(playersScores != null)
+            if (playersScores != null)
                 playersScores[playerTurn - 1]++; // add to player score
             SetScores();
             RemoveClicked(); // remove text
@@ -886,18 +1701,23 @@ namespace MMG
         }
         // This timer is started when the player clicks three icons that don't match,
         // so it counts three quarters of a second, and then turns itself off and hides both icons
+        //private void timer1_Tick(object sender, EventArgs e)
         private void timer1_Tick(object sender, EventArgs e)
         {
+        }
+        private void hideIcons()
+        {
             // Stop the timer
-            timer1.Stop();
+            //timer1.Stop();
 
             // Hide all icons
-            SetClickedIconsColour(hiddenColour);//firstClicked.BackColor); // all clicked have same backgrounds
+            //.....SetClickedIconsColour(hiddenColour);//firstClicked.BackColor); // all clicked have same backgrounds
+            
             //setClickedIconsColour(this.BackColor); // Same?
 
             // Reset firstClicked and secondClicked and thirdClicked
             // so the next time a label is clicked will be first click
-            ResetClicked();
+            ResetClickedAndSetBackground();
 
             // Turn ended 
 
@@ -923,21 +1743,34 @@ namespace MMG
 
 
             // waiting, not my turn - Async (move partial outside of thread?)
-            Thread newThread = new Thread(delegate ()
+            ChangingTurn_Thread = new Thread(delegate ()
             {
                 Debug.WriteLine("Changing turn, CheckingTurn2 thread started");
                 if (playerTurn != iAmPlayer)
                 {
-                    resetPlayerLabelsColour(); //also does - pLabels[MSQLConn.playerTurn - 1].ForeColor = Color.Red;
-                                               // Set colours of table (not clickable)
-                    SetAllIconsColours(Color.Green);
+                    if (InvokeRequired)
+                    {
+                        // Invoke to enable UI edit
+                        infoLabel.BeginInvoke((Action)(() =>
+                        {
+                            resetPlayerLabelsColour(); //also does - pLabels[MSQLConn.playerTurn - 1].ForeColor = Color.Red;
+                                                       // Set colours of table (not clickable)
+
+                            SetAllIconsBG(bgColour);
+                            SetAllIconsColours(bgColour);
+                            if (debug)
+                            {
+                                SetAllIconsColours(debugColour);
+                            }
+                        }));
+                    }
 
                     CheckingTurn2();
                 }
             });
-            newThread.Start();
+            ChangingTurn_Thread.Start();
 
-            
+
             //GameLoop(); // always true? non-player-turn cannot access here?
         }
         private void ResetClicked()
@@ -945,6 +1778,13 @@ namespace MMG
             firstClicked = null;
             secondClicked = null;
             thirdClicked = null;
+        }
+        private void ResetClickedAndSetBackground()
+        {
+            firstClicked = null;
+            secondClicked = null;
+            thirdClicked = null;
+            SetAllActiveCardsIcons();
         }
         private void RemoveClicked()
         {
@@ -957,8 +1797,9 @@ namespace MMG
         // If all of the icons are matched, the player wins
         private void CheckForWinner()
         {
-            Debug.WriteLine("Checking win!");
+            Debug.WriteLine("Win - Checking win!");
             // Go through all of the labels in the TableLayoutPanel, checking each one to see if its icon is matched
+            bool winnerFound = false;
             foreach (Control control in tableLayoutPanel1.Controls)
             {
                 Label iconLabel = control as Label;
@@ -966,34 +1807,80 @@ namespace MMG
                 // Column 0 and row 6 are for buttons, ignore labels there
                 if (iconLabel != null &&
                     tableLayoutPanel1.GetColumn(control) != 0 &&
-                    tableLayoutPanel1.GetRow(control) != 6)
+                    tableLayoutPanel1.GetRow(control) != endRow &&
+                    iconLabel.Text != "")
                 {
-                    // If any labels are hidden, no win
-                    if (iconLabel.ForeColor == hiddenColour)//iconLabel.BackColor)
-                        return;
+                    // if any labels not blank, no win
+                    Debug.WriteLine("Win - No winner yet");
+                    //if (iconLabel.ForeColor == hiddenColour)//iconLabel.BackColor)
+                    return; // stop from processing winner found
+                }
+                else
+                {
+                    // Win
+                    winnerFound = true;
                 }
             }
-
-            // If the loop didn't return, it didn't find any unmatched icons
-            // That means the user won. Show a message and close the form
-
-
-            // Game has ended, update all players
-            // At end of game set gameAlreadyStarted=false
-            // playerTurn = null/ 0
-            MySQLConn.SetIsGameAlreadyStarted(false);
-            MySQLConn.SetPlayerTurn(0);
-
-            //Close(); // instead of close, wait for restart
-            Debug.WriteLine("Someone won!");
-            WinningMessageBox();
+            // end for loop
+            // Win
+            if (winnerFound)
+            {
+                Debug.WriteLine("Win - Winner found!");
+                WinningMessageBox();
+            }
         }
         // Winner and other players show box
         public void WinningMessageBox()
         {
-            // winningMessageBox
+            // Game has ended, update all players
+            // At end of game set gameAlreadyStarted=false
+
+            // Only last scoring player updates game state
+            if (playerTurn == iAmPlayer)
+            {
+                GameEnded_Thread = new Thread(async delegate ()
+                {
+                    //await StartedCheck();
+                    Debug.WriteLine("Win - thread started");
+                    bool isFinished = false;
+
+                    await Task.Run(() =>
+                    {
+                        while (isFinished == false)
+                        {
+                            try
+                            {
+                                if (MySQLConn.conn.State == System.Data.ConnectionState.Closed)
+                                {
+                                    MySQLConn.SetIsGameAlreadyStarted(false);
+                                    MySQLConn.SetPlayerTurn(0);
+                                    Debug.WriteLine("Win - thread finished");
+                                    isFinished = true;
+                                }
+                            }
+                            catch (Exception e)
+                            {
+                                Debug.WriteLine($"Win - thread Exception: {e.Message}");
+                                Thread.Sleep(1000);
+                                Debug.WriteLine($"Win - thread try again");
+                                Thread.Sleep(1000);
+                            }
+                        }
+                        //MySQLConn.SetIsGameAlreadyStarted(false);
+                        //MySQLConn.SetPlayerTurn(0); 
+                    });
+                });
+                GameEnded_Thread.Start();
+            }
+
             // count player score
-            string congrats = "Congratulations! ";
+            // congrats = 
+                    //into "Game Over, scores = 
+					//Player 1: 0
+					//Player 2: 5
+                    //
+                    //Winner: P0 with 0 points
+            string congrats = "Game Over! \nScores = ";
             int winner = 0;
             int winnerScore = 0;
             for (int i = 1; i <= playersCount; i++)
@@ -1004,63 +1891,125 @@ namespace MMG
                     winnerScore = playersScores[i - 1];
                     winner = i;
                 }
-                congrats += $"P{i}:{playersScores[i - 1]} "; // P1 is score of pScores pos 0
+                congrats += $"\nPlayer {i}: {playersScores[i - 1]} "; // P1 is score of pScores pos 0
             }
-            congrats += $"\nWinner: P{winner} with {winnerScore} points";
+            congrats += $"\nWinner: Player {winner} with {winnerScore} points!";
 
-            Debug.WriteLine("winningmessagebox!");
+            Debug.WriteLine("WinningMessageBox!");
             // Disable form for everyone?
 
 
+            playerTurn = 0;
             // On End of game
             if (iAmPlayer == 1)
             {
                 MySQLConn.SetIsGameClientRunning(false);
-                MySQLConn.SetIsGameAlreadyStarted(false);
-                CheckGameRunning();
+                //MySQLConn.SetIsGameAlreadyStarted(false); // already set by winning player
+                //CheckGameRunning();
             }
             else
             {
                 // wait for players to catch up
-                Thread.Sleep(2000);
-                CheckGameRunning();
+                //Thread.Sleep(2000);
+                //CheckGameRunning();
             }
 
+            infoLabel.Text = "Game Finished!";
+            restartBtn.Visible = true;
+            restartBtn.Enabled = true;
+            restartBtn.Text = "Restart Client";
+            disableForm();
 
             //Congratulations, P1:, P2:, P3:
             Debug.WriteLine("Show win");
             MessageBox.Show($"{congrats}", "All the icons matched!");
         }
+        bool isClickingDisabled = false;
+        // This same loop is repeated a lot in the code
+        private void disableForm(bool setDisable = true)
+        {
+            // isClickingDisabled = true; 
+            isClickingDisabled = setDisable; // false if "enableForm" called, then clicking is enabled
+            // Disable Form
+            //foreach (Label l in Form)
+            //foreach (Control control in tableLayoutPanel1.Controls)
+            //{
+            //    Label iconLabel = control as Label;
 
+            //    if (iconLabel != null &&
+            //        tableLayoutPanel1.GetColumn(control) != 0 &&
+            //        tableLayoutPanel1.GetRow(control) != endRow)
+            //    {
+                    
+            //        //iconLabel.Enabled = false;//iconLabel.Visible = false; // ERROR?
+            //    }
+            //}
+            Debug.WriteLine($"ICONS are enabled = {isClickingDisabled}");
+        }
+        private void enableForm()
+        {
+            disableForm(false); // isClickingDisabled = false; 
+        }
 
         // Buttons
         private void restartBtn_Click(object sender, EventArgs e)
         {
             Restart();
         }
-
-        private void button1_Click(object sender, EventArgs e)
+        private void serverBtn_Click(object sender, EventArgs e)
         {
-            Thread newThread = new Thread(delegate ()
-            {
-                //infoLabel.Text
-                
-                    init(); // server
-                //
-            });
-            newThread.Start();
+            Init_thread = new Thread(delegate ()
+             {
+                 //infoLabel.Text
+
+                 init(); // server
+                         //
+             });
+            Init_thread.Start();
         }
 
         private void newWindowBtn_Click(object sender, EventArgs e)
         {
             //var form2 = new Form1();
             //form2.Show();
-            Thread newThread = new Thread(delegate ()
+            NewWindow_thread = new Thread(delegate ()
             {
                 Application.Run(new Form1());
             });
 
-            newThread.Start();
+            NewWindow_thread.Start();
+        }
+
+        private void tableLayoutPanel1_Paint(object sender, PaintEventArgs e)
+        {
+
+        }
+
+        private void RBtnSize30_CheckedChanged(object sender, EventArgs e)
+        {
+            // does this work?
+            boardSize = boardSize_1;
+            Debug.WriteLine($"Board Size = {boardSize_1}");
+        }
+
+        private void RBtnSize60_CheckedChanged(object sender, EventArgs e)
+        {
+            boardSize = boardSize_2;
+            Debug.WriteLine($"Board Size = {boardSize_2}");
+        }
+
+        private void debugLabel_Click(object sender, EventArgs e)
+        {
+            debug = !debug;
+            debugLabel.Text = $"Debug = {debug}";
+
+            //NewForm_Thread = new Thread(delegate ()
+            //{
+            //    Application.Run(new Form1());
+            //});
+
+            //NewForm_Thread.Start();
+            //this.Close();
         }
     }
 }
