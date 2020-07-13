@@ -101,6 +101,9 @@ namespace MMG
         string _isGameClientRunning = "isGameClientRunning";
         string _isGameAlreadyStarted = "isGameAlreadyStarted";
         string _playerTurn = "playerTurn";
+        string _clickedLabel = "clickedLabel";
+        string _layout = "layout";
+
 
         //List<string> iconToMake = new List<string>()
         //{
@@ -199,9 +202,15 @@ namespace MMG
                             $"WHERE {mG_dataColumn2} = '{_playerTurn}'");
                 conn.Close();
 
+                // Reset clickedLabel
+                MySQLCMDRun($"UPDATE {_matchingGame_data} " +
+                            $"SET {mG_dataColumn3} = '' " +
+                            $"WHERE {mG_dataColumn2} = '{_clickedLabel}'");
+                conn.Close();
+
                 // Reset layout
                 MySQLCMDRun($"UPDATE {_matchingGame_data} " +
-                            $"SET {mG_dataColumn3} = '0' " +
+                            $"SET {mG_dataColumn3} = '' " +
                             $"WHERE {mG_dataColumn2} = 'layout'");
                 conn.Close();
 
@@ -217,6 +226,7 @@ namespace MMG
                             $"WHERE NOT {mG_playerColumn2} = '{_playersCount}'");
                 conn.Close();
 
+                
 
                 Debug.WriteLine($"Server - SetDefault Success");
             }
@@ -401,6 +411,54 @@ namespace MMG
             catch (MySql.Data.MySqlClient.MySqlException ex)
             {
                 MessageBox.Show($"CheckTurn Exception: {ex.Message}");
+            }
+        }
+        public string CheckClickedLabel()
+        {
+            try
+            {
+                string tempLabelClicked = "";
+                MySqlDataReader dataReader = MySQLCMDRun($"SELECT * FROM {_matchingGame_data}");
+                while (dataReader.Read())
+                {
+                    if (dataReader[mG_dataColumn2].ToString() == _clickedLabel)
+                    {
+                        tempLabelClicked = dataReader[mG_dataColumn3].ToString();
+                    }
+                }
+                conn.Close();
+
+                Debug.WriteLine($"Server - CheckLabelClicked Success - Label = {tempLabelClicked}");
+                return tempLabelClicked;
+            }
+            catch (MySql.Data.MySqlClient.MySqlException ex)
+            {
+                MessageBox.Show($"CheckLabelClicked Exception: {ex.Message}");
+                return "";
+            }
+        }
+        public string CheckLayout()
+        {
+            try
+            {
+                string tempLayout = "";
+                MySqlDataReader dataReader = MySQLCMDRun($"SELECT * FROM {_matchingGame_data}");
+                while (dataReader.Read())
+                {
+                    if (dataReader[mG_dataColumn2].ToString() == _layout)
+                    {
+                        tempLayout = dataReader[mG_dataColumn3].ToString();
+                    }
+                }
+                conn.Close();
+
+                Debug.WriteLine($"Server - CheckLabelClicked Success - Label = {tempLayout}");
+                return tempLayout;
+            }
+            catch (MySql.Data.MySqlClient.MySqlException ex)
+            {
+                MessageBox.Show($"CheckLabelClicked Exception: {ex.Message}");
+                return "";
             }
         }
 
@@ -596,7 +654,39 @@ namespace MMG
                 //throw;
             }
         }
-        
+        public void SetClickedLabel(string labelName)
+        {
+            try
+            {
+                MySqlDataReader dataReader = MySQLCMDRun($"UPDATE {_matchingGame_data} " +
+                                                        $"SET {mG_dataColumn3} = '{labelName}' " +
+                                                        $"WHERE {mG_dataColumn2} = '{_clickedLabel}'");
+                conn.Close();
+                Debug.WriteLine($"Server - SetLabelClicked Success");
+            }
+            catch (MySql.Data.MySqlClient.MySqlException ex)
+            {
+                MessageBox.Show($"SetLabelClicked Exception: {ex.Message}");
+                //throw;
+            }
+        }
+        public void SetLayout(string list)
+        {
+            try
+            {
+                MySqlDataReader dataReader = MySQLCMDRun($"UPDATE {_matchingGame_data} " +
+                                                        $"SET {mG_dataColumn3} = '{list}' " +
+                                                        $"WHERE {mG_dataColumn2} = '{_layout}'");
+                conn.Close();
+                Debug.WriteLine($"Server - SetLayout Success - {list}");
+            }
+            catch (MySql.Data.MySqlClient.MySqlException ex)
+            {
+                MessageBox.Show($"SetLayout Exception: {ex.Message}");
+                //throw;
+            }
+        }
+
         public void SetScores(int[] pScore)
         {
             try

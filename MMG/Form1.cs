@@ -29,6 +29,7 @@ namespace MMG
         TO CHECK
             start client with already running game(button should open new window, close this one)
         */
+        // Server checking code = if (MySQLConn.conn.State == System.Data.ConnectionState.Closed)
 
         bool debug = false; // true, false
         MySQL MySQLConn = new MySQL();
@@ -57,7 +58,9 @@ namespace MMG
 
         List<string> iconToMake = new List<string>()
         {
-            "!", "N", "2", "k", "b", "v", "w", "z", ".", ","
+            // C = box
+            //"T", "N", "L", "k", "b", "v", "w", "z", "f", "g"//"," cannot do comma, array is seperated by this when converting to string
+            "b", "d", "e", "h", "o", "O", "L", "U", "!", "-"
         };
 
         // Each of these letters is an interesting icon
@@ -114,7 +117,7 @@ namespace MMG
         Thread NewWindow_thread;        // (debug) newWindowBtn - start new form
                                         //WaitingInfoP1_Thread.isbackground?
         Thread GameEnded_Thread;
-        Thread GameEnded_Thread2;
+        //Thread GameEnded_Thread2;
         protected override void OnFormClosing(FormClosingEventArgs e)
         {
             // still error in 
@@ -459,7 +462,7 @@ namespace MMG
                 //    iAmPlayer = 1;
                 //    MySQLConnection.AddPlayer(); // 1 player in game
                 //}
-                MessageBox.Show($"You are player {iAmPlayer}");
+                //MessageBox.Show($"You are player {iAmPlayer}");
 
                 // Async - NOT WORKING
                 //Debug.WriteLine("Before ASYNC");
@@ -496,7 +499,7 @@ namespace MMG
                 iAmPlayer = MySQLConn.playersCount; // player 2
                 this.Text += $" - Player {iAmPlayer}"; // form title
 
-                MessageBox.Show($"You are player {iAmPlayer}");
+                //MessageBox.Show($"You are player {iAmPlayer}");
                 // Every second other players check game has started
 
                 // Asnyc - NOT WORKING
@@ -558,18 +561,38 @@ namespace MMG
                 // not working?
                 //Task.Delay(5000).Wait();
                 //MySQLConn.CheckGameState
-                try
+                bool isFinished = false;
+                while (isFinished == false)
                 {
-                    if (MySQLConn.conn.State == System.Data.ConnectionState.Closed)
+                    try
                     {
-                        //MySQLConn.CheckGameState(); // this after Thread causes Error - cannot connect to server?
-                        MySQLConn.CheckPlayersCount();
+                        if (MySQLConn.conn.State == System.Data.ConnectionState.Closed)
+                        {
+                            MySQLConn.CheckPlayersCount();
+                            isFinished = true;
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        Debug.WriteLine($"Exception: {e.Message}");
+                        Thread.Sleep(1000);
+                        Debug.WriteLine($"try again");
+                        Thread.Sleep(1000);
                     }
                 }
-                catch (Exception e)
-                {
-                    Debug.WriteLine($"Exception: {e.Message}");
-                }
+
+                //try
+                //{
+                //    if (MySQLConn.conn.State == System.Data.ConnectionState.Closed)
+                //    {
+                //        //MySQLConn.CheckGameState(); // this after Thread causes Error - cannot connect to server?
+                //        MySQLConn.CheckPlayersCount();
+                //    }
+                //}
+                //catch (Exception e)
+                //{
+                //    Debug.WriteLine($"Exception: {e.Message}");
+                //}
 
                 // a repeat to update quicker
                 invokeInfoLabel($"You are Player {iAmPlayer} of {MySQLConn.playersCount}" +
@@ -687,9 +710,14 @@ namespace MMG
                 Debug.WriteLine($"2.2 Board Size - {boardSize}");
                 // UI
                 gameSizePanel.Visible = false;//gameSizePanel not visible
-                //serverBtnsPanel visible
+                                              //serverBtnsPanel visible
 
+                // set layout for all players first, then start game
+                MakeListOfIcons();
+                AssignIconsToSquares(); // Set grid, random
+                ShareLayout();
 
+                // Start new game
                 // MySQLConnection.NewGame 
                 MySQLConn.NewGame(); // set playersCount, Scores<list>, playersTurn = 1, isGameAlreadyStarted true
                 // thread stop "WaitingInfoP1"
@@ -726,8 +754,10 @@ namespace MMG
 
             // -------------------------Make this board the same for everyone (iconsLayout)-------------------------
             // Setup game board
-            MakeListOfIcons();
-            AssignIconsToSquares(); // Set grid, random
+            //MakeListOfIcons();
+            //AssignIconsToSquares(); // Set grid, random
+            //ShareLayout();
+
             SetAllActiveCardsIcons(); // set all cards to background ([)
 
             resetPlayerLabelsColour(); //pLabels
@@ -854,8 +884,9 @@ namespace MMG
                     // .. removed
                     // -------------------------Make this board the same for everyone (iconsLayout)-------------------------
                     // Setup game board
-                    MakeListOfIcons();
-                    AssignIconsToSquares(); // Set grid, random
+                    //MakeListOfIcons();
+                    //AssignIconsToSquares(); // Set grid, random
+                    GetLayoutAndSetup();
                     SetAllActiveCardsIcons(); // set all cards to background ([)
 
                     resetPlayerLabelsColour(); // set twice?
@@ -1064,6 +1095,10 @@ namespace MMG
         {
             // if not my turn
             int waiting = 0;
+            int clicked = 1;
+            string labelClicked1 = "";
+            string labelClicked2 = "";
+            string labelClicked3 = "";
             while (playerTurn != iAmPlayer) // Not this players turn
             {
                 Debug.WriteLine(".");
@@ -1078,7 +1113,85 @@ namespace MMG
                 //if (InvokeRequired) infoLabel.BeginInvoke((Action)(() => disableForm()));
                 invokeFormEnable(false);
 
-                Thread.Sleep(4000); ///Task.Delay(3000).Wait();
+                Thread.Sleep(2000); ///Task.Delay(3000).Wait();
+
+                // check other player has clicked, get name, check which click, show on board
+                string labelClicked = MySQLConn.CheckClickedLabel();
+                // More than 3 clicked, not show all cards clicked (if other player scores)
+                if (InvokeRequired)
+                {
+                    infoLabel.BeginInvoke((Action)(() =>
+                    {
+                        if (clicked > 3)
+                        {
+                            clicked = 1;
+                            labelClicked1 = "";
+                            labelClicked2 = "";
+                            labelClicked3 = "";
+                            Debug.WriteLine($"label > 3 clicked, resetting");
+                        }
+                        if (labelClicked != "")
+                        {
+                            // label not empty
+                            // Show card
+
+                            if (clicked == 1 && labelClicked1 == "") //?
+                            {
+                                labelClicked1 = labelClicked;
+                                ShowIconOnGame(labelClicked1, "");
+                                Debug.WriteLine($"label 1 clicked");
+                                clicked++; // where to put clicked? other player keeps checking clicked
+                            }
+                            else if (clicked == 2 && labelClicked2 == "" && 
+                            labelClicked1 != labelClicked)
+                            {
+                                labelClicked2 = labelClicked;
+                                ShowIconOnGame(labelClicked1, "");
+                                ShowIconOnGame(labelClicked2, "");
+                                Debug.WriteLine($"label 2 clicked");
+                                clicked++;
+                            }
+                            else if (clicked == 3 && labelClicked3 == "" && 
+                            labelClicked1 != labelClicked &&
+                            labelClicked2 != labelClicked)
+                            {
+                                labelClicked3 = labelClicked;
+                                ShowIconOnGame(labelClicked1, "");
+                                ShowIconOnGame(labelClicked2, "");
+                                ShowIconOnGame(labelClicked3, "");
+                                //clicked++;
+                                UpdateUI();
+                                // UpdateUI(label1)
+                                // wait a second, then hide them // doesn't work
+                                Thread.Sleep(2000); 
+                                // hide card... clicked1, clicked2, clicked3
+                                HideIconOnGame(labelClicked1);
+                                HideIconOnGame(labelClicked2);
+                                HideIconOnGame(labelClicked3);
+                                SetAllActiveCardsIcons();
+                                Debug.WriteLine($"label 3 clicked, resetting");
+                                clicked = 1;
+                                labelClicked1 = "";
+                                labelClicked2 = "";
+                                labelClicked3 = "";
+                                MySQLConn.SetClickedLabel("");
+                            }
+                            
+                        }
+                        else
+                        {
+                            // no label clicked
+                            Debug.WriteLine($"No label clicked");
+                        }
+                    })); // outside label1 invoke
+                } // else, no invoke, repeat code?
+                /*
+                    Server - clickedLabel
+	                Server - matchingGame_data
+	                SQL - CheckClickedLabel
+	                SQL - SetClickedLabel
+                */
+
 
                 // update turn
                 MySQLConn.CheckTurn();
@@ -1161,7 +1274,26 @@ namespace MMG
             invokeFormEnable(true);
             //if (InvokeRequired) infoLabel.BeginInvoke((Action)(() => enableForm()));
 
-            MySQLConn.CheckScores();
+            // check connection "System.InvalidOperationException: 'Connection must be valid and open.'"
+            bool isFinished = false;
+            while (isFinished == false)
+            {
+                try
+                {
+                    if (MySQLConn.conn.State == System.Data.ConnectionState.Closed)
+                    {
+                        MySQLConn.CheckScores();
+                        isFinished = true;
+                    }
+                }
+                catch (Exception e)
+                {
+                    Debug.WriteLine($"Exception: {e.Message}");
+                    Thread.Sleep(1000);
+                    Debug.WriteLine($"try again");
+                    Thread.Sleep(1000);
+                }
+            }
             playersScores = MySQLConn.playersScores;
             if (InvokeRequired)
             {
@@ -1173,6 +1305,7 @@ namespace MMG
                     SetAllIconsBG(isTurnBGColour);
                     //SetAllIconsColours(hiddenColour);
                     // debug set colour?
+                    SetAllActiveCardsIcons();
                     if (debug)
                     {
                         ShowAllIcons();
@@ -1186,6 +1319,7 @@ namespace MMG
                 resetPlayerLabelsColour();
                 //SetAllIconsColours(Color.White); // black = disabled
                 SetAllIconsBG(isTurnBGColour);
+                SetAllActiveCardsIcons();// hide
                 //SetAllIconsColours(hiddenColour);
                 // debug set colour?
                 if (debug)
@@ -1329,10 +1463,26 @@ namespace MMG
                 }
             }
         }
+        
         // Debug only
-        private void ShowAllIcons()
+        private void ShowIconOnGame(string name, string value, bool setHidden = false)//FindLabelAndSet("name", "value")
         {
-            Debug.WriteLine("DEBUG - ShowAllIcons");
+            // value not used, could use to set icon value (if needed), though icons are set in a list so not needed
+
+
+            bool allIcons = false;
+            //bool noValue = false;
+            if (name == "" && value == "")
+            {
+                allIcons = true;
+            } 
+            //else if (value == "")
+            //{
+            //    noValue = true; // labelClicked called
+            //}
+
+            // Look for label
+            Debug.WriteLine("DEBUG - ShowIcon");
             int i = 0;
             foreach (Control control in tableLayoutPanel1.Controls)
             {
@@ -1343,20 +1493,81 @@ namespace MMG
                     tableLayoutPanel1.GetColumn(control) != 0 &&
                     tableLayoutPanel1.GetRow(control) != endRow)
                 {
-                    if (iconLabel.Text != "" && gameIconsLayout[i][0] != "")
+                    if (allIcons)
                     {
-                        iconLabel.Text = gameIconsLayout[i][0]; // 0 = ("i", "label1"), 0 0 = ("i")
-                        Debug.Write($" - {gameIconsLayout[i][0]}");
+                        if (iconLabel.Text != "" && gameIconsLayout[i][0] != "")
+                        {
+                            iconLabel.Text = gameIconsLayout[i][0]; // 0 = ("i", "label1"), 0 0 = ("i")
+                            Debug.Write($" - {gameIconsLayout[i][0]}");
+                        }
+                        else
+                        {
+                            
+                        }
+                        //Debug.WriteLine($"ShowAllIcons - {item[1]}, {item[0]}");
                     }
                     else
                     {
-                        Debug.Write($" - NOT {gameIconsLayout[i][0]}");                    
+                        // only one label to chage (clicked label)
+                        if (iconLabel.Text != "")
+                        {
+                            if (iconLabel.Name == name) // labelClicked
+                            {
+                                if (!setHidden)
+                                {
+                                    iconLabel.Text = gameIconsLayout[i][0];
+                                    Debug.WriteLine("");
+                                    Debug.WriteLine($"changed - {gameIconsLayout[i][1]}");
+                                }
+                                else
+                                {
+                                    iconLabel.Text = "";
+                                    gameIconsLayout[i][0] = ""; // removes icon from player waiting if active player scores
+                                }
+                            }
+                            //Debug.Write($"c - {gameIconsLayout[i][1]}");
+                        }
+                        else
+                        {
+                            Debug.Write($" - Blank");
+                        }
+                        //Debug.Write($" - NOT {gameIconsLayout[i][0]}");
                     }
-                    //Debug.WriteLine($"ShowAllIcons - {item[1]}, {item[0]}");
                     i++;
                 }
             }
             Debug.WriteLine("");
+        }
+        // Debug only
+        private void ShowAllIcons()
+        {
+            ShowIconOnGame("", "");
+
+            //Debug.WriteLine("DEBUG - ShowAllIcons");
+            //int i = 0;
+            //foreach (Control control in tableLayoutPanel1.Controls)
+            //{
+            //    Label iconLabel = control as Label;
+
+            //    // Column 0 and row 6 are for buttons, ignore labels there
+            //    if (iconLabel != null &&
+            //        tableLayoutPanel1.GetColumn(control) != 0 &&
+            //        tableLayoutPanel1.GetRow(control) != endRow)
+            //    {
+            //        if (iconLabel.Text != "" && gameIconsLayout[i][0] != "")
+            //        {
+            //            iconLabel.Text = gameIconsLayout[i][0]; // 0 = ("i", "label1"), 0 0 = ("i")
+            //            Debug.Write($" - {gameIconsLayout[i][0]}");
+            //        }
+            //        else
+            //        {
+            //            Debug.Write($" - NOT {gameIconsLayout[i][0]}");                    
+            //        }
+            //        //Debug.WriteLine($"ShowAllIcons - {item[1]}, {item[0]}");
+            //        i++;
+            //    }
+            //}
+            //Debug.WriteLine("");
             /*
             foreach (var item in gameIconsLayout)
             {
@@ -1372,7 +1583,12 @@ namespace MMG
             }
             */
         }
-        private void ReAssignIconsToSquares(Label clickedLabel)
+        
+        private void HideIconOnGame(string name)
+        {
+            ShowIconOnGame("", "", true); 
+        }
+            private void ReAssignIconsToSquares(Label clickedLabel)
         {
 
             //foreach (Control control in tableLayoutPanel1.Controls)
@@ -1413,6 +1629,9 @@ namespace MMG
                 }
             }
         }
+        //"AssignIconsToSquares" creates "gameIconsLayout"
+        //(remove from P2, only P1 can create layout)
+
         // Assign each icon from the list of icons to a random square
         private void AssignIconsToSquares()
         {
@@ -1439,6 +1658,27 @@ namespace MMG
             }
             Debug.WriteLine("LIST LIST DONE");
         }
+        private void AssignIconsToSquares(List<string> icons)
+        {
+            // The TableLayoutPanel has 16 labels, and the icon list has 16 icons,
+            // so an icon is pulled at random from the list and added to each label
+            int i = 0;
+            foreach (Control control in tableLayoutPanel1.Controls)
+            {
+                Label iconLabel = control as Label;
+
+                // Column 0 and row 6 are for buttons, ignore labels there
+                if (iconLabel != null &&
+                    tableLayoutPanel1.GetColumn(control) != 0 &&
+                    tableLayoutPanel1.GetRow(control) != endRow)
+                {
+                    iconLabel.Text = icons[i];
+                    AddToGameIconsLayout(iconLabel.Text, iconLabel.Name);
+                    i++;
+                }
+            }
+            Debug.WriteLine("LIST LIST DONE");
+        }
         private void AddToGameIconsLayout(string labelName, string icon)
         {
             //SetGameIconsLayout();
@@ -1448,6 +1688,43 @@ namespace MMG
             // etc
             gameIconsLayout.Add(temp);
         }
+        private void ShareLayout()
+        {
+            //Send gameIconsLayout
+            // go through gameIconsLayout and set a new list of just values, make list into a string and send
+            List<string> temp = new List<string>();
+            foreach (var item in gameIconsLayout)
+            {
+                temp.Add(item[0]); // 0 = label text, 1 = label name
+            }
+            string tempString = string.Join(",", temp.ToArray());
+            MySQLConn.SetLayout(tempString);
+
+            /*
+                string[] arr = new string[] { "one", "two", "three", "four" };
+                Console.WriteLine(String.Join("\n", sarr)); 
+
+                string dogCsv = string.Join(",", dogs.ToArray());
+                
+                foreach (string item in list) 
+                */
+        }
+        private void GetLayoutAndSetup()
+        {
+            //Retrieve gameIconsLayout
+            // make string into list and set gameIconsLayout values
+            string tempString = MySQLConn.CheckLayout();
+            if (tempString == "")
+            {
+                Debug.WriteLine("DEBUG - tempString is blank (MySQLConn.CheckLayout())");
+                return;
+            } 
+            
+            List<string> temp = new List<string>(tempString.Split(',')); //List<string> temp = tempString.Split(',').ToList(); // LINQ
+
+            AssignIconsToSquares(temp);
+        }
+
         private void SetAllActiveCardsIcons()
         {
             foreach (Control control in tableLayoutPanel1.Controls)
@@ -1460,7 +1737,7 @@ namespace MMG
                     tableLayoutPanel1.GetRow(control) != endRow &&
                     iconLabel.Text != "" ) 
                 {
-                    iconLabel.Text = "[";
+                    iconLabel.Text = "["; // back of card text
                     //iconLabel.ForeColor = hiddenColour;//iconLabel.BackColor; // set invisible
                 }
             }
@@ -1563,10 +1840,19 @@ namespace MMG
         }
 
 
-
+        int sleep = 4000; // wait for user to be ready first? (server value)
         // Every label's Click event is handled by this event handler
+        private void ClickWait()
+        {
+            infoLabel.Text = "Wait";
+            UpdateUI();
+            Thread.Sleep(sleep);
+            enableForm();
+            infoLabel.Text = "Continue";
+        }
         private void label_Click(object sender, EventArgs e)
         {
+            
             // database things
             //MySQLConnection.MySQLConnect(); // MySQL Connection
             //MySQLConnection.SelectAll(); // SelectAll
@@ -1589,11 +1875,15 @@ namespace MMG
 
             // The timer is only on after three non-matching icons have been shown to the player, 
             // so ignore any clicks if the timer is running
-            
+
 
             if (timer1.Enabled == true || isClickingDisabled)
+            {
                 return;
-
+            }
+            
+            disableForm(); // isClickingDisabled = true
+            
             // Clicked
             Label clickedLabel = sender as Label;
 
@@ -1646,11 +1936,16 @@ namespace MMG
                 if (clickedLabel.Text != "[")
                 {
                     Debug.WriteLine("No back image");
+                    enableForm();
                     return;
                 }
-            
+
+
+                // Click
+                // Otherwise continue with click
             SkipBackImageCheck:
-                // Otherwise continue
+                // if conn open?
+                MySQLConn.SetClickedLabel(clickedLabel.Name);
                 ReAssignIconsToSquares(clickedLabel);
 
                 // If firstClicked is null, this is the first icon in the trio that the player clicked, 
@@ -1658,6 +1953,8 @@ namespace MMG
                 if (firstClicked == null)
                 {
                     firstClicked = clickedLabel;
+
+                    ClickWait();
                     //firstClicked.ForeColor = selectedColour;
                     //MySQLConnection.Update($"FirstClicked={clickedLabel}");
                     return;
@@ -1670,6 +1967,7 @@ namespace MMG
                 if (secondClicked == null)
                 {
                     secondClicked = clickedLabel;
+                    ClickWait();
                     //secondClicked.ForeColor = selectedColour;
                     return;
                 }
@@ -1698,10 +1996,13 @@ namespace MMG
                 thirdClicked.Refresh(); // doesn't update otherwise
                 //UpdateUI(thirdClicked);
                 // this takes time??
-
+                //disableForm();
+                infoLabel.Text = "Wait";
+                UpdateUI();
+                Thread.Sleep(sleep);
+                infoLabel.Text = "Continue";
 
                 // After clicks, check same/ different selected icons
-
                 // 3 same icons
                 // If the player clicked three matching icons, keep them black 
                 //  and reset firstClicked and secondClicked and thirdClicked
@@ -1709,9 +2010,10 @@ namespace MMG
                 if (firstClicked.Text == secondClicked.Text &&
                     secondClicked.Text == thirdClicked.Text)
                 {
-                    disableForm(); // stop more clicks
+                     // stop more clicks
                     PlayerScored();
-                    enableForm();
+                    ClickWait();
+                    //enableForm(); // only enable form again if player scores
                     return;
                 }
 
