@@ -71,7 +71,7 @@ namespace MMG
         //bool setDefault = false; // SQL defaults
 
         public MySqlConnection conn;
-        public Form1 myForm;
+        public static Form1 myForm;
         string connString;
         public static string message;
 
@@ -117,6 +117,7 @@ namespace MMG
         public int playerTurn = 0;
         public int playersCount = 1; // default 1
         public int[] playersScores = new int[6];
+        public string labelClicked = "";
         
 
 
@@ -160,7 +161,7 @@ namespace MMG
             DialogResult result;
 
             // yes, no, yes and close
-            result = MessageBox.Show($"Server data reset?", "Yes, No, Yes and Close", MessageBoxButtons.YesNoCancel);
+            result = MessageBox.Show($"Server data reset? (Yes, No, Yes and Close)", "Yes, No, Yes and Close", MessageBoxButtons.YesNoCancel);
 
             //result = MessageBox.Show(message, caption, buttons);
             if (result == DialogResult.Yes)
@@ -179,7 +180,7 @@ namespace MMG
                 //myForm.CloseForm(); // Closes the parent form.
             }
         }
-        public void SetDefault()
+        public void SetDefaultOLD()
         {
             try
             {
@@ -235,12 +236,251 @@ namespace MMG
                 MessageBox.Show($"SetDefault Exception: {ex.Message}");
             }
         }
+        // MySQL refactoring (performance)
+        // DONE Test 1 = connect as P1 (faster?)     - uses SetDefault and P1Connected (new method)
+        // Test 2 = Start game button (faster?) - uses P1StartedGame (new method)
+        // Test 3 = Waiting for turn/ scoring   - uses CheckingTurnAndState (new method)
+
+        //1. Tidy up SetDefault()
+        //2. MySQLConn.P1Connected(); // In CheckGameRunning()
+        //          MySQLConn.SetIsGameClientRunning(true);
+        //          MySQLConn.AddPlayer(); 
+        //3. MySQLConn.P1StartedGame(); // In StartGameAndRestart()
+        //        MySQLConn.NewGame();
+        //        MySQLConn.CheckGameState();
+        //        MySQLConn.CheckScores();
+        //        MySQLConn.CheckTurn();
+        //4. MySQLConn.CheckingTurnsAndState();// In CheckingTurn()
+        //      MySQLConn.CheckClickedLabel();
+        //      MySQLConn.CheckTurn();
+        //      MySQLConn.CheckScores();
+        //      MySQLConn.CheckGameState();
+        // also go to Scoring and only update by players count
+
+        public void SetDefault()
+        {
+            try
+            {
+                Debug.WriteLine("Server - Setting defaults on server");
+                // Reset isGameClientRunning
+                // Reset isGameAlreadyStarted
+                // Reset playerTurn
+                // Reset clickedLabel
+                // Reset layout
+                // Reset playersCount
+                // Reset p1, p2, p3...
+
+                MySQLCMDRun($"UPDATE {_matchingGame_data} " +
+                            $"SET {mG_dataColumn3} = 'false' " +
+                            $"WHERE {mG_dataColumn2} = '{_isGameClientRunning}';" +
+                            
+                            $"UPDATE {_matchingGame_data} " +
+                            $"SET {mG_dataColumn3} = 'false' " +
+                            $"WHERE {mG_dataColumn2} = '{_isGameAlreadyStarted}';" +
+                            
+                            $"UPDATE {_matchingGame_data} " +
+                            $"SET {mG_dataColumn3} = '0' " +
+                            $"WHERE {mG_dataColumn2} = '{_playerTurn}';" +
+                            
+                            $"UPDATE {_matchingGame_data} " +
+                            $"SET {mG_dataColumn3} = '' " +
+                            $"WHERE {mG_dataColumn2} = '{_clickedLabel}';" +
+                            
+                            $"UPDATE {_matchingGame_data} " +
+                            $"SET {mG_dataColumn3} = '' " +
+                            $"WHERE {mG_dataColumn2} = 'layout';" +
+
+
+                            $"UPDATE {_matchingGame_players} " +
+                            $"SET {mG_playerColumn3} = '0' " +
+                            $"WHERE {mG_playerColumn2} = '{_playersCount}';" +
+
+                            $"UPDATE {_matchingGame_players} " +
+                            $"SET {mG_playerColumn3} = '0' " +
+                            $"WHERE NOT {mG_playerColumn2} = '{_playersCount}'");
+                conn.Close();
+
+                Debug.WriteLine($"Server - SetDefault2 Success");
+            }
+            catch (MySql.Data.MySqlClient.MySqlException ex)
+            {
+                MessageBox.Show($"SetDefault2 Exception: {ex.Message}");
+            }
+        }
+
+        public void P1Connected()
+        {
+            try
+            {
+                //MySQLConn.AddPlayer();  //Get then set players count
+                MySqlDataReader dataReader2 = MySQLCMDRun($"SELECT * FROM {_matchingGame_players}");
+                while (dataReader2.Read())
+                {
+                    // Name column
+                    if (dataReader2[mG_playerColumn2].ToString() == $"{_playersCount}")
+                    {
+                        //Could not find specified column in results: playersCount
+                        string temp = (dataReader2[mG_playerColumn3].ToString()); //mG_playerColumn2
+                        playersCount = int.Parse(temp);
+                    }
+                }
+                playersCount++;
+                // MySQLConn.SetIsGameClientRunning(true) and set players count
+                MySqlDataReader dataReader3 = MySQLCMDRun($"UPDATE {_matchingGame_players} " +
+                                                                $"SET {mG_playerColumn3} = '{playersCount}' " +
+                                                                $"WHERE {mG_playerColumn2} = '{_playersCount}';" + // ; to seperate statements
+
+                                                                $"UPDATE {_matchingGame_data} " +
+                                                                $"SET {mG_dataColumn3} = '{true}' " +
+                                                                $"WHERE {mG_dataColumn2} = '{_isGameClientRunning}'");
+                conn.Close();
+
+                Debug.WriteLine($"Server - P1Connected Success");
+            }
+            catch (MySql.Data.MySqlClient.MySqlException ex)
+            {
+                MessageBox.Show($"P1Connected Exception: {ex.Message}");
+            }
+        }
+
+        public void P1StartedGame()
+        {
+            try
+            {
+                //        MySQLConn.NewGame();
+                //        MySQLConn.CheckTurn();
+                //        MySQLConn.CheckGameState();
+                //        //MySQLConn.CheckPlayersCount(); // Set when checking players joined
+                //        MySQLConn.CheckScores();
+
+                // set playerTurn 1 // set isGameAlreadyStarted true //set PlayersCount  // set each players
+                MySqlDataReader dataReader = MySQLCMDRun($"UPDATE {_matchingGame_data} " +
+                                                                $"SET {mG_dataColumn3} = '1' " +
+                                                                $"WHERE {mG_dataColumn2} = '{_playerTurn}';" +
+
+                                                                $"UPDATE {_matchingGame_data} " +
+                                                                $"SET {mG_dataColumn3} = '{true}' " +
+                                                                $"WHERE name = '{_isGameAlreadyStarted}';" +
+
+                                                                $"UPDATE {_matchingGame_players} " +
+                                                                $"SET {mG_playerColumn3} = '{playersCount}' " +
+                                                                $"WHERE {mG_playerColumn2} = '{_playersCount}';" +
+
+                                                                $"UPDATE {_matchingGame_players} " +
+                                                                $"SET {mG_playerColumn3} = '0' " +
+                                                                $"WHERE NOT {mG_playerColumn2} = '{_playersCount}'"); // not "playersCount" = p1, p2, p3, p4, p5, p6?
+                conn.Close();
+
+                // Turn // Game state // Players count // players scores
+                playerTurn = 1;
+                isGameAlreadyStarted = true; // Game client is running and now game is already started
+                //playersCount = ... // set when checking players joined
+                // set all local scores to 0
+                for (int i = 0; i < playersCount - 1; i++)
+                {
+                    playersScores[i] = 0;
+                }
+
+                Debug.WriteLine($"Server - P1StartedGame Success");
+            }
+            catch (MySql.Data.MySqlClient.MySqlException ex)
+            {
+                MessageBox.Show($"P1StartedGame Exception: {ex.Message}");
+            }
+        }
+
+
+        public void CheckingTurnsAndState()
+        {
+            try
+            {
+                //4. MySQLConn.CheckingTurnsAndState();// In CheckingTurn()
+                //      MySQLConn.CheckClickedLabel();
+                //      MySQLConn.CheckTurn();
+                //      MySQLConn.CheckScores();
+                //      MySQLConn.CheckGameState();
+
+
+
+                //CheckClickedLabel
+                MySqlDataReader dataReader = MySQLCMDRun($"SELECT * FROM {_matchingGame_data}");
+                //string query = $"SELECT * FROM {_matchingGame_data}";
+                //MySqlCommand cmd = new MySqlCommand(query, conn);
+                //MySqlDataReader dataReader = cmd.ExecuteReader();
+                while (dataReader.Read())
+                {
+                    if (dataReader[mG_dataColumn2].ToString() == _clickedLabel)
+                    {
+                        labelClicked = dataReader[mG_dataColumn3].ToString();
+                    }
+                }
+                conn.Close();
+
+                //CheckTurn();
+                dataReader = MySQLCMDRun($"SELECT * FROM {_matchingGame_data}");
+                while (dataReader.Read())
+                {
+                    if (dataReader[mG_dataColumn2].ToString() == _playerTurn)
+                    {
+                        playerTurn = int.Parse(dataReader[mG_dataColumn3].ToString());
+                    }
+                }
+                conn.Close();
+
+                //CheckScores();
+                dataReader = MySQLCMDRun($"SELECT * FROM {_matchingGame_players}");
+                int[] tempplayersScores = new int[6];
+                int i = 0;
+                while (dataReader.Read())
+                {
+                    // Dont need to check?
+                    if (dataReader[mG_playerColumn2].ToString() != _playersCount)
+                    {
+                        tempplayersScores[i] = (int)dataReader[mG_playerColumn3];
+                        i++;
+                    }
+                }
+                // Set local scores
+                for (int j = 0; j < playersCount; j++)
+                {
+                    Debug.WriteLine($"Server - CheckScores - pScore? {j}= {playersScores[j]}");
+
+                    playersScores[j] = tempplayersScores[j];
+                }
+                conn.Close();
+
+                //CheckGameState();
+                dataReader = MySQLCMDRun($"SELECT * FROM {_matchingGame_data}");
+                string tempisGameClientRunning = "false";
+                string tempisGameAlreadyStarted = "false";
+                while (dataReader.Read())
+                {
+                    if (dataReader[mG_dataColumn2].ToString() == _isGameClientRunning)
+                    {
+                        tempisGameClientRunning = (string)dataReader[mG_dataColumn3];
+                    }
+                    if (dataReader[mG_dataColumn2].ToString() == _isGameAlreadyStarted)
+                    {
+                        tempisGameAlreadyStarted = dataReader[mG_dataColumn3].ToString();
+                    }
+                }
+                if (bool.Parse(tempisGameClientRunning))
+                    isGameClientRunning = bool.Parse(tempisGameClientRunning);
+                if (bool.Parse(tempisGameAlreadyStarted))
+                    isGameAlreadyStarted = bool.Parse(tempisGameAlreadyStarted);
+                conn.Close();
+                Debug.WriteLine($"Server - CheckingTurnsAndState Success");
+            }
+            catch (MySql.Data.MySqlClient.MySqlException ex)
+            {
+                //MessageBox.Show
+                Debug.WriteLine($"CheckingTurnsAndState Exception: {ex.Message}");
+            }
+        }
+
 
         // Empty name data method?
 
-        
-
-        
         //public void ConnStart()
         //{
         //    conn = new MySqlConnection();
@@ -413,7 +653,7 @@ namespace MMG
                 MessageBox.Show($"CheckTurn Exception: {ex.Message}");
             }
         }
-        public string CheckClickedLabel()
+        public void CheckClickedLabel()
         {
             try
             {
@@ -429,12 +669,13 @@ namespace MMG
                 conn.Close();
 
                 Debug.WriteLine($"Server - CheckLabelClicked Success - Label = {tempLabelClicked}");
-                return tempLabelClicked;
+                //return tempLabelClicked;
+                labelClicked = tempLabelClicked;
             }
             catch (MySql.Data.MySqlClient.MySqlException ex)
             {
                 MessageBox.Show($"CheckLabelClicked Exception: {ex.Message}");
-                return "";
+                //return "";
             }
         }
         public string CheckLayout()
@@ -452,12 +693,18 @@ namespace MMG
                 }
                 conn.Close();
 
-                Debug.WriteLine($"Server - CheckLabelClicked Success - Label = {tempLayout}");
+                Debug.WriteLine($"Server - CheckLayout Success - Layout = {tempLayout}");
                 return tempLayout;
             }
             catch (MySql.Data.MySqlClient.MySqlException ex)
             {
-                MessageBox.Show($"CheckLabelClicked Exception: {ex.Message}");
+                MessageBox.Show($"CheckLayout Exception: {ex.Message}");
+                return "";
+            }
+            catch (Exception ex)
+            {
+                // Exception here??
+                MessageBox.Show($"CheckLayout Exception: {ex.Message}");
                 return "";
             }
         }
