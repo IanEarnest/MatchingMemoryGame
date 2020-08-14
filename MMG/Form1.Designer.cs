@@ -30,8 +30,15 @@
         {
             this.components = new System.ComponentModel.Container();
             this.tableLayoutPanel1 = new System.Windows.Forms.TableLayoutPanel();
-            this.restartBtn = new System.Windows.Forms.Button();
+            this.infoPanel1 = new System.Windows.Forms.FlowLayoutPanel();
             this.infoLabel = new System.Windows.Forms.Label();
+            this.flowLayoutPanel1 = new System.Windows.Forms.FlowLayoutPanel();
+            this.ServerLabel = new System.Windows.Forms.Label();
+            this.ServerConnectionLabel = new System.Windows.Forms.Label();
+            this.DatabaseLabel = new System.Windows.Forms.Label();
+            this.DatabaseConnectionLabel = new System.Windows.Forms.Label();
+            this.connectionCheckBtn = new System.Windows.Forms.Button();
+            this.restartBtn = new System.Windows.Forms.Button();
             this.p6Label = new System.Windows.Forms.Label();
             this.p5Label = new System.Windows.Forms.Label();
             this.p4Label = new System.Windows.Forms.Label();
@@ -78,6 +85,8 @@
             this.RBtnSize60 = new System.Windows.Forms.RadioButton();
             this.timer1 = new System.Windows.Forms.Timer(this.components);
             this.tableLayoutPanel1.SuspendLayout();
+            this.infoPanel1.SuspendLayout();
+            this.flowLayoutPanel1.SuspendLayout();
             this.serverBtnsPanel.SuspendLayout();
             this.gameSizePanel.SuspendLayout();
             this.SuspendLayout();
@@ -93,8 +102,8 @@
             this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 15F));
             this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 15F));
             this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 15F));
+            this.tableLayoutPanel1.Controls.Add(this.infoPanel1, 0, 6);
             this.tableLayoutPanel1.Controls.Add(this.restartBtn, 1, 6);
-            this.tableLayoutPanel1.Controls.Add(this.infoLabel, 0, 6);
             this.tableLayoutPanel1.Controls.Add(this.p6Label, 0, 5);
             this.tableLayoutPanel1.Controls.Add(this.p5Label, 0, 4);
             this.tableLayoutPanel1.Controls.Add(this.p4Label, 0, 3);
@@ -149,6 +158,93 @@
             this.tableLayoutPanel1.TabIndex = 0;
             this.tableLayoutPanel1.Paint += new System.Windows.Forms.PaintEventHandler(this.tableLayoutPanel1_Paint);
             // 
+            // infoPanel1
+            // 
+            this.infoPanel1.Controls.Add(this.infoLabel);
+            this.infoPanel1.Controls.Add(this.flowLayoutPanel1);
+            this.infoPanel1.Dock = System.Windows.Forms.DockStyle.Left;
+            this.infoPanel1.FlowDirection = System.Windows.Forms.FlowDirection.TopDown;
+            this.infoPanel1.Location = new System.Drawing.Point(5, 647);
+            this.infoPanel1.Name = "infoPanel1";
+            this.infoPanel1.Size = new System.Drawing.Size(186, 101);
+            this.infoPanel1.TabIndex = 6;
+            // 
+            // infoLabel
+            // 
+            this.infoLabel.Dock = System.Windows.Forms.DockStyle.Left;
+            this.infoLabel.Location = new System.Drawing.Point(3, 0);
+            this.infoLabel.MaximumSize = new System.Drawing.Size(185, 65);
+            this.infoLabel.MinimumSize = new System.Drawing.Size(185, 65);
+            this.infoLabel.Name = "infoLabel";
+            this.infoLabel.Size = new System.Drawing.Size(185, 65);
+            this.infoLabel.TabIndex = 1;
+            this.infoLabel.Text = "infoLabel";
+            // 
+            // flowLayoutPanel1
+            // 
+            this.flowLayoutPanel1.Controls.Add(this.ServerLabel);
+            this.flowLayoutPanel1.Controls.Add(this.ServerConnectionLabel);
+            this.flowLayoutPanel1.Controls.Add(this.DatabaseLabel);
+            this.flowLayoutPanel1.Controls.Add(this.DatabaseConnectionLabel);
+            this.flowLayoutPanel1.Controls.Add(this.connectionCheckBtn);
+            this.flowLayoutPanel1.Location = new System.Drawing.Point(3, 68);
+            this.flowLayoutPanel1.MinimumSize = new System.Drawing.Size(185, 30);
+            this.flowLayoutPanel1.Name = "flowLayoutPanel1";
+            this.flowLayoutPanel1.Size = new System.Drawing.Size(185, 30);
+            this.flowLayoutPanel1.TabIndex = 6;
+            // 
+            // ServerLabel
+            // 
+            this.ServerLabel.AutoSize = true;
+            this.ServerLabel.Location = new System.Drawing.Point(0, 0);
+            this.ServerLabel.Margin = new System.Windows.Forms.Padding(0);
+            this.ServerLabel.MaximumSize = new System.Drawing.Size(20, 20);
+            this.ServerLabel.Name = "ServerLabel";
+            this.ServerLabel.Size = new System.Drawing.Size(20, 20);
+            this.ServerLabel.TabIndex = 3;
+            this.ServerLabel.Text = "S:";
+            // 
+            // ServerConnectionLabel
+            // 
+            this.ServerConnectionLabel.AutoSize = true;
+            this.ServerConnectionLabel.Location = new System.Drawing.Point(23, 0);
+            this.ServerConnectionLabel.MaximumSize = new System.Drawing.Size(20, 0);
+            this.ServerConnectionLabel.Name = "ServerConnectionLabel";
+            this.ServerConnectionLabel.Size = new System.Drawing.Size(20, 20);
+            this.ServerConnectionLabel.TabIndex = 1;
+            this.ServerConnectionLabel.Text = "O";
+            // 
+            // DatabaseLabel
+            // 
+            this.DatabaseLabel.AutoSize = true;
+            this.DatabaseLabel.Location = new System.Drawing.Point(46, 0);
+            this.DatabaseLabel.Margin = new System.Windows.Forms.Padding(0);
+            this.DatabaseLabel.MaximumSize = new System.Drawing.Size(30, 20);
+            this.DatabaseLabel.Name = "DatabaseLabel";
+            this.DatabaseLabel.Size = new System.Drawing.Size(23, 20);
+            this.DatabaseLabel.TabIndex = 4;
+            this.DatabaseLabel.Text = "D:";
+            // 
+            // DatabaseConnectionLabel
+            // 
+            this.DatabaseConnectionLabel.AutoSize = true;
+            this.DatabaseConnectionLabel.Location = new System.Drawing.Point(72, 0);
+            this.DatabaseConnectionLabel.MaximumSize = new System.Drawing.Size(20, 0);
+            this.DatabaseConnectionLabel.Name = "DatabaseConnectionLabel";
+            this.DatabaseConnectionLabel.Size = new System.Drawing.Size(20, 20);
+            this.DatabaseConnectionLabel.TabIndex = 1;
+            this.DatabaseConnectionLabel.Text = "O";
+            // 
+            // connectionCheckBtn
+            // 
+            this.connectionCheckBtn.Location = new System.Drawing.Point(98, 3);
+            this.connectionCheckBtn.Name = "connectionCheckBtn";
+            this.connectionCheckBtn.Size = new System.Drawing.Size(73, 26);
+            this.connectionCheckBtn.TabIndex = 2;
+            this.connectionCheckBtn.Text = "Connect";
+            this.connectionCheckBtn.UseVisualStyleBackColor = true;
+            this.connectionCheckBtn.Click += new System.EventHandler(this.connectionCheckBtn_Click);
+            // 
             // restartBtn
             // 
             this.restartBtn.Dock = System.Windows.Forms.DockStyle.Fill;
@@ -160,15 +256,6 @@
             this.restartBtn.Text = "Restart";
             this.restartBtn.UseVisualStyleBackColor = true;
             this.restartBtn.Click += new System.EventHandler(this.restartBtn_Click);
-            // 
-            // infoLabel
-            // 
-            this.infoLabel.AutoSize = true;
-            this.infoLabel.Location = new System.Drawing.Point(5, 644);
-            this.infoLabel.Name = "infoLabel";
-            this.infoLabel.Size = new System.Drawing.Size(71, 20);
-            this.infoLabel.TabIndex = 1;
-            this.infoLabel.Text = "infoLabel";
             // 
             // p6Label
             // 
@@ -684,6 +771,9 @@
             this.Text = "Form1";
             this.tableLayoutPanel1.ResumeLayout(false);
             this.tableLayoutPanel1.PerformLayout();
+            this.infoPanel1.ResumeLayout(false);
+            this.flowLayoutPanel1.ResumeLayout(false);
+            this.flowLayoutPanel1.PerformLayout();
             this.serverBtnsPanel.ResumeLayout(false);
             this.serverBtnsPanel.PerformLayout();
             this.gameSizePanel.ResumeLayout(false);
@@ -742,6 +832,13 @@
         private System.Windows.Forms.RadioButton RBtnSize30;
         private System.Windows.Forms.FlowLayoutPanel gameSizePanel;
         private System.Windows.Forms.Label debugLabel;
+        private System.Windows.Forms.Button connectionCheckBtn;
+        private System.Windows.Forms.FlowLayoutPanel infoPanel1;
+        private System.Windows.Forms.FlowLayoutPanel flowLayoutPanel1;
+        private System.Windows.Forms.Label ServerLabel;
+        private System.Windows.Forms.Label ServerConnectionLabel;
+        private System.Windows.Forms.Label DatabaseLabel;
+        private System.Windows.Forms.Label DatabaseConnectionLabel;
     }
 }
 

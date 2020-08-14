@@ -120,12 +120,12 @@ namespace MMG
         //Thread GameEnded_Thread2;
         protected override void OnFormClosing(FormClosingEventArgs e)
         {
+                // check all threads on this process?
             // still error in 
             //Exception thrown: 'System.Threading.ThreadInterruptedException' in System.Private.CoreLib.dll
             Debug.WriteLine("Closing...");
             try
             {
-
             
             //1.4 Waiting for Players thread is still going??
             //Debug.WriteLine("Closing... threads first check");
@@ -352,9 +352,13 @@ namespace MMG
 
             MySQL.myForm = this; // static  //MySQLConn.myForm = this; // Message box can close form
             disableGameGrid(); // both players start without being able to click on grid
+
+            DatabaseConnectionLabel.BackColor = Color.Red;
+            ServerConnectionLabel.BackColor = Color.Red;
+            ConnectionCheck();
         }
         // This is inside a thread
-        public void ServerConnect() //init
+        public void DatabaseConnect() //init
         {
             Thread ConnState_Thread = new Thread(delegate ()
             {
@@ -369,18 +373,18 @@ namespace MMG
                             // Using infoLabel beginInvoke to update all UI on a thread
                             infoLabel.BeginInvoke((Action)(() =>
                             {
-                                p6Label.ForeColor = Color.Black;
+                                DatabaseConnectionLabel.ForeColor = Color.Black;
                                 if(MySQLConn.conn != null)
                                 {
                                     //Debug.WriteLine("Con set");
-                                    p6Label.Text = MySQLConn.conn.State.ToString();
+                                    p6Label.Text = "Database Con: " + MySQLConn.conn.State.ToString(); // REMOVE/ change
                                     if(MySQLConn.conn.State == System.Data.ConnectionState.Closed)
                                     {
-                                        p6Label.BackColor = Color.Red;
+                                        DatabaseConnectionLabel.BackColor = Color.Red;
                                     }
                                     if(MySQLConn.conn.State == System.Data.ConnectionState.Open)
                                     {
-                                        p6Label.BackColor = Color.Green;
+                                        DatabaseConnectionLabel.BackColor = Color.Green;
                                     }
                                 }
                             }));
@@ -390,7 +394,7 @@ namespace MMG
                             if(MySQLConn.conn != null)
                             {
                                 Debug.WriteLine("Connection set INVOKE");
-                                p6Label.Text = MySQLConn.conn.State.ToString();
+                                DatabaseConnectionLabel.Text = MySQLConn.conn.State.ToString();
                             }
                         }
                         //Thread.Sleep(1000);
@@ -576,8 +580,10 @@ namespace MMG
                 //if (IsHandleCreated)
                 // Always synchronous.  (But you must watch out for cross-threading deadlocks!)
                 invokeInfoLabel($"You are Player {iAmPlayer} of {MySQLConn.playersCount}" +
-                                $"\nWaiting for players to join" +
-                                $"\nYou have been waiting for {waiting} seconds in the lobby");
+                                $"\nYou have waited {waiting} seconds");
+                //invokeInfoLabel($"You are Player {iAmPlayer} of {MySQLConn.playersCount}" +
+                //                $"\nWaiting for players to join" +
+                //                $"\nYou have been waiting for {waiting} seconds in the lobby");
                 if (InvokeRequired)
                 {
                     infoLabel.BeginInvoke((Action)(() =>
@@ -636,8 +642,7 @@ namespace MMG
 
                 // a repeat to update quicker
                 invokeInfoLabel($"You are Player {iAmPlayer} of {MySQLConn.playersCount}" +
-                                $"\nWaiting for players to join" +
-                                $"\nYou have been waiting for {waiting} seconds in the lobby");
+                                $"\nYou have waited {waiting} seconds");
                 // Stops "Handle required" exception
                 //if (InvokeRequired)
                 //{
@@ -836,8 +841,10 @@ namespace MMG
                 Debug.WriteLine("...Waiting for P1 to start");
 
                 invokeInfoLabel($"You are Player {iAmPlayer} of {MySQLConn.playersCount}" +
-                                $"\nWaiting for Player 1 to Start The Game" +
-                                $"\nYou have been waiting for {waiting} seconds in the lobby");
+                                $"\nYou have waited {waiting} seconds for Player 1");
+                //invokeInfoLabel($"You are Player {iAmPlayer} of {MySQLConn.playersCount}" +
+                //                $"\nWaiting for Player 1 to Start The Game" +
+                //                $"\nYou have been waiting for {waiting} seconds in the lobby");
                 if (InvokeRequired)
                 {
                     infoLabel.BeginInvoke((Action)(() =>
@@ -1149,8 +1156,7 @@ namespace MMG
                 // Update turn, update score, check for game ended
                 Debug.WriteLine("...Not my turn, Waiting"); // not your turn
 
-                invokeInfoLabel($"Please wait..." +
-                                $"\nPlayer {MySQLConn.playerTurn}'s turn" +
+                invokeInfoLabel($"Please wait... Player {MySQLConn.playerTurn}'s turn" +
                                 $"\nYou have waited {waiting} seconds for your turn");
                 waiting++;
                 // Disable form
@@ -2493,7 +2499,7 @@ namespace MMG
              {
                  //infoLabel.Text
 
-                 ServerConnect(); // server
+                 DatabaseConnect(); // server
                          //
              });
             Init_thread.Start();
@@ -2541,6 +2547,96 @@ namespace MMG
 
             //NewForm_Thread.Start();
             //this.Close();
+        }
+
+        // connection check
+        // ConnectionCheck          MYSQL   select all from both databases
+        // ConnectionCheckBtn       Form    code
+        // ConnectionCheckLabel     Form    update red/ blue
+        // other label?             Form    same but for open/ closed
+        // ConnectionCheckBtn_Click Code    auto pressed, user can also press, hidden of connected
+        // check connection to server, at start of program, only display button if connection is false
+        // display in title green/ red
+        string connectionCheckLabelText = "O";
+        bool connectionCheckBool = false;
+        private void ChangeConnectionCheckLabel()
+        {
+            ServerConnectionLabel.Text = connectionCheckLabelText;
+            ServerConnectionLabel.ForeColor = Color.Black;
+            //if (MySQLConn.conn != null) // not connected
+            //{
+            connectionCheckBool = MySQLConn.ConnectionCheck();
+
+            if (connectionCheckBool == false)
+            {
+                ServerConnectionLabel.BackColor = Color.Red; // also pops up with message box
+                serverBtnsPanel.Visible = false;
+            }
+            else if (connectionCheckBool == true)
+            {
+                ServerConnectionLabel.BackColor = Color.Green;
+            }
+            connectionCheckBtn.Visible = !connectionCheckBool; // visible if not connected, invisible if connected
+            serverBtnsPanel.Visible = connectionCheckBool; // visible if connected, invisible if not connected
+            gameSizePanel.Visible = connectionCheckBool;
+            restartBtn.Visible = connectionCheckBool;
+            // singleplayer button if no connection?
+            //}
+        }
+        private void connectionCheckBtn_Click(object sender, EventArgs e)
+        {
+            ConnectionCheck();
+        }
+        // Thread, connection check, invoke, connectionCheckingThread (always)
+        private void ConnectionCheck()
+        {
+            Thread ConnCheck_Thread = new Thread(delegate ()
+            {
+                Debug.WriteLine("Connection Check thread started");
+                Task.Run(() =>
+                {
+                    if (InvokeRequired) {infoLabel.BeginInvoke((Action)(() =>
+                    { 
+                        ChangeConnectionCheckLabel();
+                    }));}
+                    else
+                    {
+                        ChangeConnectionCheckLabel();
+                        Debug.WriteLine("Connection Check INVOKE");
+
+                    }
+                });
+            });
+            ConnCheck_Thread.Start();
+            ConnectionCheckingThread();
+        }
+        // check connected every 2 seconds, if not, wait for pop up/ press of connect btn click
+        private void ConnectionCheckingThread()
+        {
+            Thread ConnChecking_Thread = new Thread(delegate ()
+            {
+                Debug.WriteLine("Connection Checking thread started");
+                
+                Task.Run(() =>
+                {
+                    // always running, every 2 seconds
+                    while(connectionCheckBool)
+                    {
+                        Task.Delay(2000).Wait();
+                        if (InvokeRequired) {infoLabel.BeginInvoke((Action)(() =>
+                        { 
+                            ChangeConnectionCheckLabel();
+                        }));}
+                        else
+                        {
+                            ChangeConnectionCheckLabel();
+                            Debug.WriteLine("Connection Checking INVOKE");
+                        }
+                    }
+                        //Task.Delay(2000).Wait();
+                });
+            });
+            ConnChecking_Thread.Start();
         }
     }
 }

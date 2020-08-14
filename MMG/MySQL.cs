@@ -72,7 +72,10 @@ namespace MMG
 
         public MySqlConnection conn;
         public static Form1 myForm;
-        string connString;
+        string connString = "server= 162.241.230.107;" +
+                        "PORT=3306;DATABASE=ffunrnmy_matchingGame;" +
+                        "UID=ffunrnmy_player1;" +
+                        "PASSWORD=password;";
         public static string message;
 
         string _matchingGame_players = "matchingGame_players";
@@ -125,10 +128,7 @@ namespace MMG
         {
             // database - 162.241.230.107
             //"server= 162.241.230.107;PORT=3306?;DATABASE=myDB;UID=user;PASSWORD=password;"
-            connString = "server= 162.241.230.107;" +
-                        "PORT=3306;DATABASE=ffunrnmy_matchingGame;" +
-                        "UID=ffunrnmy_player1;" +
-                        "PASSWORD=password;";
+            
 
             matchingGame_dataColumns = new List<string>(){
                 mG_dataColumn1,
@@ -154,6 +154,26 @@ namespace MMG
             //    SetDefault(); // resets tables values
             Debug.WriteLine("Server - Init");
         }
+        public bool ConnectionCheck()
+        {
+            try
+            {
+                MySqlDataReader dataReader = MySQLCMDRun($"SELECT * FROM {_matchingGame_data}");
+                conn.Close();
+
+                MySqlDataReader dataReader2 = MySQLCMDRun($"SELECT * FROM {_matchingGame_players}");
+                conn.Close();
+
+                Debug.WriteLine($"Server - ConnectionCheck Success");
+                return true;
+            }
+            catch (MySql.Data.MySqlClient.MySqlException ex)
+            {
+                MessageBox.Show($"You are not connected to the server, please report to admin - ConnectionCheck Exception: {ex.Message}");
+                return false;
+            }
+        }
+
 
         public void ServerDataResetMessageBox()
         {
