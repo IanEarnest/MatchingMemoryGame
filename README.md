@@ -4,6 +4,7 @@
 # MatchingMemoryGame
 
 > A project to create a game to play with family online, Matching Memory Game (aka. Concentration)
+https://ianharcourtsmith.com/matching-memory-game/
 
 Version 0.4.0
 
