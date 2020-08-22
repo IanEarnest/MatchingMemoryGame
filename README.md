@@ -1,12 +1,12 @@
 <a href="https://github.com/IanEarnest/MatchingMemoryGame/blob/master/MMG%20Pics/pic%200.png"><img src="https://raw.githubusercontent.com/IanEarnest/MatchingMemoryGame/master/MMG%20Pics/pic%200.png" title="MMG pic 0" alt="MMG pic 0" height="300"></a>
 
 
-# MatchingMemoryGame
+# Matching Memory Game
 
 > A project to create a game to play with family online, Matching Memory Game (aka. Concentration)
 https://ianharcourtsmith.com/matching-memory-game/
 
-Version 0.4.0
+Version 0.4.0 - does not work locally/ needs SQL access
 
 [![Build Status](http://img.shields.io/travis/badges/badgerbadgerbadger.svg?style=flat-square)]
 
