@@ -1039,7 +1039,7 @@ namespace MMG
             //}));
             //await Task.Run(WaitingInfo);
         }
-        */
+        */ 
 
 
         // Waiting for start of game
