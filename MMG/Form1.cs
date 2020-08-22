@@ -19,7 +19,8 @@ namespace MMG
         bigger board
         timer after first card picked, ends turn
         expand to 20 players?
-        */
+        */ 
+        //test commit
 
         /* Player 1 gets stats of game? how to handle quit early?
         Singleplayer game?/ local
