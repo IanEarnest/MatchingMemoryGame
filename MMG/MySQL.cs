@@ -9,6 +9,7 @@ namespace MMG
 {
     public class MySQL
     {
+        // testing commit 1,
         /* How to SQL Connect
         (old) Download MySQL Connector Net, project reference MySql.Data
               using mysql.data.mysqlclient
