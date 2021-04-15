@@ -11,7 +11,7 @@ namespace MMG
 {
     public partial class Form1 :Form
     {
-
+        // TASK = REMOVE THREADING, use tasks?
         // timer interval was 750
         /* Future
         game timer, 
