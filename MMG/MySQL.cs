@@ -198,6 +198,7 @@ namespace MMG
                 SetDefault();
                 // this.close?
                 myForm.thisIsClosed = true;
+                //myForm.IsDisposed
                 //myForm.CloseForm(); // Closes the parent form.
             }
         }

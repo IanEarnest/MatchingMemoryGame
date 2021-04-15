@@ -11,6 +11,7 @@ namespace MMG
 {
     public partial class Form1 :Form
     {
+        // static - not set due to local testing
 
         // timer interval was 750
         /* Future
@@ -37,8 +38,7 @@ namespace MMG
         public bool thisIsClosed;
 
 
-        // Use this Random object to choose random icons for the squares
-        Random random = new Random();
+        
         //Color selectedColour = Color.Black;
         //Color hiddenColour;     // white = debug
         //Color debugColour = Color.Green;
@@ -1792,6 +1792,9 @@ namespace MMG
         // Assign each icon from the list of icons to a random square
         private void AssignIconsToSquares()
         {
+            // Use this Random object to choose random icons for the squares
+            Random random = new Random();
+
             // The TableLayoutPanel has 16 labels, and the icon list has 16 icons,
             // so an icon is pulled at random from the list and added to each label
             foreach (Control control in tableLayoutPanel1.Controls)
